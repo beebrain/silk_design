@@ -2,6 +2,7 @@
 from asyncio import events
 from cgitb import text
 import os
+from re import T
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import *
@@ -9,12 +10,15 @@ from tkinter import *
 import pickle
 from turtle import onclick, position
 from webbrowser import get
-
 from cv2 import scaleAdd
 import Datapoint as Dp
 import ChildClass as CCD
 import ChildCanvas as CCV
+import Previewpic as PRV
+import Datapoint as DP
+import Reportlanscape
 import Report
+
 from PIL import ImageTk, Image, ImageDraw
 import numpy as np
 import cv2
@@ -26,6 +30,9 @@ import win32api
 import tempfile
 from tkinter.messagebox import showinfo
 from win32api import GetSystemMetrics
+from tkPDFViewer import tkPDFViewer as pdf
+from scipy.ndimage import rotate
+
 #from screeninfo import get_monitors
 
 #for m in get_monitors():
@@ -52,8 +59,10 @@ class GuiTestApp:
         
         #canvas Parameter
         self.canvas_width = 1200     
-        self.canvas_height = 900
+        self.canvas_height = 768
 
+        self.width = 50
+        self.height = 50
         #CanvasDraw
         self.canvas_draw_width = 50*self.scale
         self.canvas_draw_height = 50*self.scale
@@ -77,7 +86,7 @@ class GuiTestApp:
         self.canvasMain.grid(column='0', row='0')
         self.canvasMain.grid(row='0', column='0')
         
-   
+        
     
         #Scroll bar 
         frame=Frame(self.canvasMain)
@@ -85,7 +94,7 @@ class GuiTestApp:
 
         #self.canvasMain = Canvas(frame,bg='white',height=self.canvas_draw_height,width=self.canvas_draw_width,
         self.canvasMain = Canvas(frame,bg='white',height=self.canvas_height,width=self.canvas_width,
-                    scrollregion=(0,0,50*self.scale,50*self.scale))
+                    scrollregion=(0,0,self.canvas_draw_height*self.scale,self.canvas_draw_width*self.scale))
         
         
         hbar = Scrollbar(frame,orient = HORIZONTAL)
@@ -154,11 +163,14 @@ class GuiTestApp:
         self.colorSelect.configure(text='เลือกสี', width='15')
         self.colorSelect.pack(side='top')
         self.printReport = ttk.Button(self.labelframe1)
-        self.printReport.configure(text='ส่งออกเป็น PDF', width='15',command=self.reportExample)
+        self.printReport.configure(text='Preview', width='15',command=self.reportExample)
         self.printReport.pack(side='top')
         self.printReport1 = ttk.Button(self.labelframe1)
-        self.printReport1.configure(text='Print', width='15',command=self.locprinter)
+        self.printReport1.configure(text='Previewlanscape', width='15',command=self.reportExamplelanscape)
         self.printReport1.pack(side='top')
+        # self.printReport1 = ttk.Button(self.labelframe1)
+        # self.printReport1.configure(text='Print', width='15',command=self.locprinter)
+        # self.printReport1.pack(side='top')
         
         
         self.zoomin1 = ttk.Button(self.labelframe1)
@@ -212,9 +224,11 @@ class GuiTestApp:
         self.moveImage = None
         self.FullImageBackground = None
         self.Fullthumnal = None
+        self.Fullpreview =  None
         ## image array 
         self.ImageBackground = None
         self.thumnal = None
+        self.preview = None
 
 
          # general parameter
@@ -235,6 +249,7 @@ class GuiTestApp:
         self.drawgrid()
         #### reloadListthermail image
         self.reloadListImage()
+        #self.reloadListImagePreview()
         
     ################# This function for create sub Windows
     def cancleMode(self):
@@ -254,18 +269,35 @@ class GuiTestApp:
             cx, cy = event2canvas(event, self.canvasMain)
             x,y = (int(cx),int(cy))
             self.window_data = self.thumnal
+            ratio = self.line_distance*self.scale
             self.bg_img = self.ImageBackground.copy()
             ### find Current Index
-            indexx = (x//10)*10
-            indexy = (y//10)*10
+            indexx = (x//ratio)*ratio
+            indexy = (y//ratio)*ratio
             print(indexx,indexy)
             print(self.bg_img.shape[0])
             if indexx+self.thumnal.shape[1] <= self.bg_img.shape[1] and indexy+self.thumnal.shape[0] <= self.bg_img.shape[0]:
                 self.bg_img[indexy:indexy+self.thumnal.shape[0],indexx:indexx+self.thumnal.shape[1]] = self.window_data
+
+                shapes = np.zeros_like(self.bg_img, np.uint8)
+    
+            
+                # Put the overlay at the bottom-right corner
+                shapes[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
+                mask = shapes.astype(bool)
+                #bg_img = background.copy()
+            # Create the overlay
+                self.bg_img[mask] = cv2.addWeighted(self.bg_img, 1 - 0.1, shapes,
+                                        0.5, 0)[mask]
+                cv2.imshow("1",self.bg_img)
+                cv2.waitKey(10)
+
+
                 self.img = ImageTk.PhotoImage(Image.fromarray(self.bg_img))
                 self.canvasMain.create_image(0, 0,image=self.img,anchor="nw")
                 # self.ImageBackground = ImageBackground
                 print("xx")
+            print("overlay")
     ########### Main Function 
     def convertColor(self,colorCode):
         return (int(colorCode, 16))
@@ -278,34 +310,47 @@ class GuiTestApp:
             color3 = self.convertColor(colorconvert[5:])
             x,y = self.GdataPointObj.datapoint[indexPoint]
             x,y = int(x),int(y)
-            self.ImageBackground[y:y+10,x:x+10,0] = color1
-            self.ImageBackground[y:y+10,x:x+10,1] = color2
-            self.ImageBackground[y:y+10,x:x+10,2] = color3
-
+            self.ImageBackground[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,0] = color1
+            self.ImageBackground[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,1] = color2
+            self.ImageBackground[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,2] = color3
+          
         color = (0, 0, 0)
         thickness = 1
 
         #draw grid
         # vertical lines at an interval of "line_distance" pixel
-        for x in range(0,self.canvas_draw_height,self.line_distance):
-            self.ImageBackground = cv2.line(self.ImageBackground,(x, 0), ( x, self.canvas_draw_height), color, thickness)
+        for x in range(0,self.canvas_draw_height*self.scale,self.line_distance*self.scale):
+             self.ImageBackground = cv2.line(self.ImageBackground,(x, 0), ( x, self.canvas_draw_height), color, thickness)
         # horizontal lines at an interval of "line_distance" pixel
-        for y in range(0,self.canvas_draw_width,self.line_distance):
-            self.ImageBackground = cv2.line(self.ImageBackground,(0, y), (self.canvas_draw_width, y), color, thickness)
+        for y in range(0,self.canvas_draw_width*self.scale,self.line_distance*self.scale):
+             self.ImageBackground = cv2.line(self.ImageBackground,(0, y), (self.canvas_draw_width, y), color, thickness)
+           
 
     def regenImageThumnal(self):
         color = (0, 0, 0)
         thickness = 1
         #draw grid
         # vertical lines at an interval of "line_distance" pixel
-        for x in range(0,self.thumnal.shape[1],self.line_distance):
-            self.thumnal = cv2.line(self.thumnal,(x, 0), ( x,self.thumnal.shape[0]), color, thickness)
+        for x in range(0,self.thumnal.shape[1],self.line_distance*self.scale):
+            if x%(5*self.scale) == 0:
+                self.thumnal = cv2.line(self.thumnal,(x, 0), ( x,self.thumnal.shape[0]), color, thickness)
+            else: 
+                self.thumnal = cv2.line(self.thumnal,(x, 0), ( x,self.thumnal.shape[0]), color, thickness)
         # horizontal lines at an interval of "line_distance" pixel
-        for y in range(0,self.thumnal.shape[0],self.line_distance):
-            self.thumnal = cv2.line(self.thumnal,(0, y), (self.thumnal.shape[1], y), color, thickness)
+        for y in range(0,self.thumnal.shape[0],self.line_distance*self.scale):
+            if x%(5*self.scale) == 0:
+                self.thumnal = cv2.line(self.thumnal,(0, y), (self.thumnal.shape[1], y), color, thickness)
+            else:
+                 self.thumnal = cv2.line(self.thumnal,(0, y), (self.thumnal.shape[1], y), color, thickness)
 
+                 
         self.thumnal = cv2.rectangle(self.thumnal,(0,0),(self.thumnal.shape[1],self.thumnal.shape[0]),\
-            (255,0,0),2)
+            (0,0,0),2)
+
+
+
+
+    
 
     def overLayImage(self):
         self.regenImageWithData()
@@ -316,9 +361,11 @@ class GuiTestApp:
         # Here is where the mouse coordinates should be injected to move the window over the background image
         x,y = (0,0)
         self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
+
+       
         self.img = ImageTk.PhotoImage(Image.fromarray(self.bg_img))
         ### disable All button
-
+        print("Overlay")
     
         self.changemode(mode=3)
 
@@ -327,20 +374,21 @@ class GuiTestApp:
 
     def drawgrid(self):
         #self.canvasMain.config(width=self.canvas_draw_width, height=self.canvas_draw_width)
-
+        
         # vertical lines at an interval of "line_distance" pixel
         for x in range(0,int(self.canvas_draw_width),int(self.line_distance*self.scale)):
             if x%(5*self.scale) == 0:
-               self.canvasMain.create_line(x, 0, x, int(self.canvas_draw_width), fill="black")
+               self.canvasMain.create_line(x, 0, x, int(self.canvas_draw_height), fill="black")
             else: 
-                self.canvasMain.create_line(x, 0, x, int(self.canvas_draw_width), fill="gray")
+                self.canvasMain.create_line(x, 0, x, int(self.canvas_draw_height), fill="gray")
         # horizontal lines at an interval of "line_distance" pixel
         for y in range(0,int(self.canvas_draw_height),int(self.line_distance*self.scale)):
             if y%(5*self.scale) == 0:
-               self.canvasMain.create_line(0, y, int(self.canvas_draw_height), y, fill="black")
+               self.canvasMain.create_line(0, y, int(self.canvas_draw_width), y, fill="black")
             else: 
-                self.canvasMain.create_line(0, y, int(self.canvas_draw_height), y, fill="gray")
+                self.canvasMain.create_line(0, y, int(self.canvas_draw_width), y, fill="gray")
         self.canvasMain.update()
+
     def selectcolor(self):
         my_clolor = colorchooser.askcolor()
         #    dataPointObj.currentColor = my_clolor[1]
@@ -434,6 +482,7 @@ class GuiTestApp:
         self.GdataPointObj = Dp.Datapoint()
         self.GdataPointObj.height = self.canvas_draw_height
         self.GdataPointObj.width = self.canvas_draw_width
+        self.canvasMain.update()
 
     ## print datapoint
     def paintwithDataPoint(self,fixcolor=False):
@@ -450,7 +499,7 @@ class GuiTestApp:
             myrectangle = self.canvasMain.create_rectangle((indexx*self.scale), indexy*self.scale, indexx*self.scale+(ratio*self.scale),indexy*self.scale+(ratio*self.scale), fill='black')
             self.canvasMain.itemconfig(myrectangle, fill=colorpoint)
 
-
+    """
     def paintwithDataPoint2(self,fixcolor=False):
         ratio = 10
         for indexpoint,datapointindex in enumerate(self.GdataPointObj.datapoint): 
@@ -467,18 +516,20 @@ class GuiTestApp:
                 #print("Scale6666",self.scale)
             myrectangle = self.canvasMain.create_rectangle(indexx//2, indexy//2, indexx//2+(ratio*self.scale),indexy//2+(ratio*self.scale), fill='black')
             self.canvasMain.itemconfig(myrectangle, fill=colorpoint)
-
+    """
 
     def clearCanvas(self,start=(0,0),width=30,height=50):
-        for x in range(start[0],start[0]+width,self.line_distance):
-            for y in range(start[1],start[1]+height,self.line_distance):
+        ratio = self.line_distance*self.scale
+        for x in range(int(start[0]),int(start[0])+width,self.line_distance*self.scale):
+            for y in range(int(start[1]),int(start[1])+height,self.line_distance*self.scale):
                 if [x,y] in self.GdataPointObj.datapoint:
-                    ## 
                     indexofList = self.GdataPointObj.datapoint.index([x,y])
                     del self.GdataPointObj.datapoint[indexofList]
                     del self.GdataPointObj.colorpoint[indexofList]
-                myrectangle = self.canvasMain.create_rectangle(x, y, x+10, y+10, fill='red')
+                myrectangle = self.canvasMain.create_rectangle(x,y, x+(ratio),y+(ratio), fill='red')
                 self.canvasMain.itemconfig(myrectangle, fill='white')
+                
+                
 
     def paintButton_Move(self,event):
 
@@ -498,12 +549,13 @@ class GuiTestApp:
         if self.mode == 1:
             ## for draw mega pixel
             current_color = self.GdataPointObj.currentColor
-            #print(event.x,event.y)
+            print(event.x,event.y)
             #print("curcer {},{} index {},{} current {},{}".format(x,y,indexx,indexy,self.currentindexX,self.currentindexY))
 
 
             dataPoint = self.GdataPointObj.datapoint
-            if [indexx,indexy] in dataPoint:
+            indexx_s1,indexy_s1 = indexx//self.scale,indexy//self.scale
+            if [indexx_s1,indexy_s1] in dataPoint:
                 #print( indexx,indexy)         ### It filled
                 ### filled white color and remove indexx, indexy
                 if (str(event.type) == "Motion" and\
@@ -513,22 +565,25 @@ class GuiTestApp:
                     del self.GdataPointObj.datapoint[indexofList]
                     del self.GdataPointObj.colorpoint[indexofList]
 
-                    myrectangle = self.canvasMain.create_rectangle(indexx, indexy, indexx+10, indexy+10, fill='black')
+                    
+                    myrectangle = self.canvasMain.create_rectangle(indexx,indexy, indexx+(ratio),indexy+(ratio), fill='black')
                     self.canvasMain.itemconfig(myrectangle, fill='white')
             else:
                 if str(event.type) == "Motion" and (self.currentindexX != indexx or self.currentindexY != indexy):
-                    self.GdataPointObj.datapoint +=[[indexx,indexy]] ## new filled
+                    self.GdataPointObj.datapoint +=[[indexx_s1,indexy_s1]] ## new filled
                     self.GdataPointObj.colorpoint+=[self.GdataPointObj.currentColor]
-                    myrectangle = self.canvasMain.create_rectangle(indexx, indexy, indexx+10, indexy+10, fill='black')
+                    myrectangle = self.canvasMain.create_rectangle(indexx,indexy, indexx+(ratio),indexy+(ratio), fill='black')
                     self.canvasMain.itemconfig(myrectangle, fill=current_color)
+            
             #print(self.GdataPointObj.datapoint)
 
         elif self.mode ==2: # draw rectangle mode
             
-            if x > self.canvas_draw_width:
-                indexx = (self.canvas_draw_width//10)*10
-            if y > self.canvas_draw_height:
-                indexy = (self.canvas_draw_height//10)*10
+            
+            if x >= self.canvas_draw_width-1:
+                indexx = (((self.canvas_draw_width-1))*ratio)*self.scale 
+            if y >= self.canvas_draw_height-1:
+                indexy = (((self.canvas_draw_height-1)//ratio)*ratio)*self.scale
 
 
             curX = self.canvasMain.canvasx(indexx)
@@ -547,7 +602,7 @@ class GuiTestApp:
         x = self.canvasMain.canvasx(event.x)
         y = self.canvasMain.canvasy(event.y)
 
-        #print("canvaspoint1 = {},{}".format(self.canvasMain.canvasx(x),self.canvasMain.canvasy(y)))
+        #print("canvaspoint1 = {},{}".format(self.canvasMain.canvasx(x)//self.scale,self.canvasMain.canvasy(y)//self.scale))
 
         indexx = (x//ratio)*ratio
         indexy = (y//ratio)*ratio
@@ -593,8 +648,8 @@ class GuiTestApp:
                 self.rect = self.canvasMain.create_rectangle(self.x, self.y, 0, 0, outline='red',width=2)
         elif self.mode == 3:
             #### replace data to mainCanvas
-            indexx = (x//ratio)*ratio
-            indexy = (y//ratio)*ratio
+            indexx = (x//self.scale)
+            indexy = (y//self.scale)
             print("Helloooo")
             self.clearCanvas(start=(indexx,indexy),width=self.MiniGDataPoint.width,height=self.MiniGDataPoint.height)
             array_temp = np.array(self.MiniGDataPoint.datapoint)
@@ -604,7 +659,7 @@ class GuiTestApp:
             self.GdataPointObj.datapoint += miniDatapoint
             self.GdataPointObj.colorpoint += self.MiniGDataPoint.colorpoint
             
-            
+            self.canvasMain.delete("all")
             self.drawgrid()
             self.paintwithDataPoint()
             self.changemode(mode=1)
@@ -624,6 +679,8 @@ class GuiTestApp:
             startY = min(self.start_y//self.scale,self.currentindexY//self.scale)
             endX = max(self.start_x//self.scale,self.currentindexX//self.scale)
             endY = max(self.start_y//self.scale,self.currentindexY//self.scale)
+            endX = endX
+            endY = endY
             tempData = []
             tempColor = []
             for indexPoint,(x,y) in enumerate(self.GdataPointObj.datapoint):
@@ -642,16 +699,15 @@ class GuiTestApp:
             self.kid_canvas.paintDataPoint()
             
 
-
-
         # ------------------------------ หน้าต่างแสดงตัวอย่างภาพย่อยที่บันทึกแล้ว -------------------------------------
     def redrawCanvasMini(self):
         # self.canvasMini.config(width=100, height=100)
         # self.canvasMini.config(height=self.canvasMini_height,width=self.canvasMini_width)
-        #print(self.Fullthumnal.width())
-        #print(self.Fullthumnal.height())
-        self.canvasMini.configure(background='#FFFFFF', height=self.Fullthumnal.height()*self.scale, width=self.Fullthumnal.width()*self.scale)
+        print(self.Fullthumnal.width())
+        print(self.Fullthumnal.height())
+        self.canvasMini.configure(background='#FFFFFF', height=self.Fullthumnal.height(), width=self.Fullthumnal.width())
         self.canvasMini.create_image(0,0, anchor=NW, image=self.Fullthumnal)     
+        
 
         # vertical lines at an interval of "line_distance" pixel
         for x in range(0,self.Fullthumnal.width()*self.scale,self.line_distance*self.scale):
@@ -716,70 +772,234 @@ class GuiTestApp:
             with open("ImageMini/IndexImage.txt","w") as readIndex:
                 readIndex.write("{:04d}".format(0))
 
+
+
+
+
+
+
     def reportExample(self):
-        c = Report.Report(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+       # self.overLaypreview()
 
-   
+        #b = Preview.Preview(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+         
+        #self.canvaspreview = PRV.Previewpic(self)
+        #c = Report.Report(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+    
+        #Window Preview
+        self.toplevel = tk.Toplevel()
+        self.toplevel.title("preview")    
+        width= 800
+        height= 841
+        self.toplevel.geometry("%dx%d" % (width,height))
+        self.toplevel.configure()
+        self.toplevel.resizable(True, True)
 
- 
-
-
-    def installed_printer():
-        printers = win32print.EnumPrinters(2)
-        for p in printers:
-            return(p)
-
-    printerdef = ''
-
-    def locprinter(self):
-        pt = Toplevel()
-    ##    pt.geometry("250x250")
-        pt.title("choose printer")
-        var1 = StringVar()
-        LABEL = Label(pt, text="Select Printer",bg='goldenrod2',fg='black').pack(fill=X)
-        PRCOMBO = ttk.Combobox(pt, width=35)
-        print_list = []
-        printers = list(win32print.EnumPrinters(2))
-        for i in printers:
-            print_list.append(i[2])
-        print(print_list)
-        # Put printers in combobox
-        PRCOMBO['values'] = print_list
-        defprinter= win32print.GetDefaultPrinter()
-        print('Default selected Printer:',defprinter)
-        PRCOMBO.set(defprinter)
-        PRCOMBO.pack(padx=5,pady=5)
-            
-        def select():
-            global printerdef
-            printerdef = PRCOMBO.get()
-            printcommand()
-            pt.destroy()
-        BUTTON = ttk.Button(pt, text="Print",width=30,command=select).pack(pady=10)
-
-        LAB = Canvas(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
-        LAB.pack()
-
-   
-
-        def printcommand():
-            printPic = LAB.pack_configure()
-            print(printPic)
-            print(printerdef)
+        #Button
+        self.button1 = tk.Button(self.toplevel)
+        self.button1.configure(text='บันทึกpdf')
+        self.button1.grid(column='0', row='2', sticky='nw')
+        self.button1['command'] = self.exportpdf
+        self.button1 = tk.Button(self.toplevel)
+    
+        #  #Label
+        labelpreview = tk.LabelFrame(self.toplevel)
+        labelpreview.configure(height=841 , takefocus=True, text='Preview',width=594)
+        labelpreview.grid(column='5', row='5')
         
-            win32print.SetDefaultPrinter(printerdef)
-            filename = tempfile.mktemp(".txt")
-            open(filename,"w").write(str(printPic))
-            # Bellow is call to print text from T2 textbox
-            win32api.ShellExecute(
-                0,
-                "printto",
-                filename,
-                '"%s"' % win32print.GetDefaultPrinter(),
-                ".",
-                0
-            )
-            showinfo(title='Success',message='Print Successful',detail='Printing is done . thank You!')
+        # self.button1 = tk.Button(self.toplevel)
+        # self.button1.configure(text='บันทึกpdf')
+        # self.button1.grid(column='0', row='2', sticky='nw')
+        # self.button1['command'] = self.exportpdf
+        # self.button1 = tk.Button(self.toplevel)
+
+        #canvas
+        self.canvaspreview = tk.Canvas(labelpreview)
+        self.canvaspreview.place(relwidth=1, relheight=1)
+        paperheigth = self.toplevel.winfo_fpixels('1m') * 297
+        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
+        self.canvaspreview.create_rectangle(20, 20, 20+paperwidth, 20+paperheigth, outline='', fill='white')
+        self.canvaspreview.create_text(300, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))        
+
+        # Save Picture Preview
+        self.DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255
+        self.DatapointSavepic.shape
+        for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
+            color1 = self.convertColor(colorconvert[1:3])
+            color2 = self.convertColor(colorconvert[3:5])
+            color3 = self.convertColor(colorconvert[5:])
+            x,y =self.GdataPointObj.datapoint[indexPoint]
+            x,y = int(x),int(y)
+            print(x,y)
+            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
+            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
+            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
+
+        color = (0, 0, 0)
+        thickness = 1
+                
+        for x in range(0,self.canvas_draw_width//2,self.line_distance*self.scale//2):
+            self.DatapointSavepic = cv2.line(self.DatapointSavepic,(x, 0), ( x, self.canvas_draw_height//2), color, thickness)
+    # horizontal lines at an interval of "line_distance" pixel
+        for y in range(0,self.canvas_draw_height//2,self.line_distance*self.scale//2):
+            self.DatapointSavepic = cv2.line(self.DatapointSavepic,(0, y), (self.canvas_draw_width//2, y), color, thickness)
+
+        
+        img = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
+
+        self.Fullpreview = img
+        self.preview = self.DatapointSavepic
+
+        #Press Picture Preview
+        self.canvaspreview.configure(background='#FFFFFF', height=self.Fullpreview.height()//2, width=self.Fullpreview.width()//2)
+        self.canvaspreview.create_image(55,55,anchor=NW, image=self.Fullpreview )
+        self.toplevel.mainloop()
+          
+    
+    
+    def reportExamplelanscape(self):
+       # self.overLaypreview()
+
+        #b = Preview.Preview(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+         
+        #self.canvaspreview = PRV.Previewpic(self)
+        #c = Report.Report(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+    
+        #Window Preview
+        self.toplevel = tk.Toplevel()
+        self.toplevel.title("preview")    
+        width= 1000
+        height= 650
+        self.toplevel.geometry("%dx%d" % (width,height))
+        self.toplevel.configure()
+        self.toplevel.resizable(True, True)
+
+        #Button
+        self.button1 = tk.Button(self.toplevel)
+        self.button1.configure(text='บันทึกpdf')
+        self.button1.grid(column='0', row='2', sticky='nw')
+        self.button1['command'] = self.exportpdf
+        self.button1 = tk.Button(self.toplevel)
+    
+        #  #Label
+        labelpreview = tk.LabelFrame(self.toplevel)
+        labelpreview.configure(height=594 , takefocus=True, text='Preview',width=841)
+        labelpreview.grid(column='5', row='5')
+        
+        # self.button1 = tk.Button(self.toplevel)
+        # self.button1.configure(text='บันทึกpdf')
+        # self.button1.grid(column='0', row='2', sticky='nw')
+        # self.button1['command'] = self.exportpdf
+        # self.button1 = tk.Button(self.toplevel)
+
+        #canvas
+        self.canvaspreview = tk.Canvas(labelpreview)
+        self.canvaspreview.place(relwidth=1, relheight=1)
+        paperheigth = self.toplevel.winfo_fpixels('1m') * 210
+        paperwidth = self.toplevel.winfo_fpixels('1m') * 297
+        self.canvaspreview.create_rectangle(20, 20, 20+paperwidth, 20+paperheigth, outline='', fill='white')
+        self.canvaspreview.create_text(300, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))        
+
+        # Save Picture Preview
+        self.DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255
+        self.DatapointSavepic.shape
+        for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
+            color1 = self.convertColor(colorconvert[1:3])
+            color2 = self.convertColor(colorconvert[3:5])
+            color3 = self.convertColor(colorconvert[5:])
+            x,y =self.GdataPointObj.datapoint[indexPoint]
+            x,y = int(x),int(y)
+            print(x,y)
+            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
+            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
+            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
+
+        color = (0, 0, 0)
+        thickness = 1
+                
+        for x in range(0,self.canvas_draw_width//2,self.line_distance*self.scale//2):
+            self.DatapointSavepic = cv2.line(self.DatapointSavepic,(x, 0), ( x, self.canvas_draw_height//2), color, thickness)
+    # horizontal lines at an interval of "line_distance" pixel
+        for y in range(0,self.canvas_draw_height//2,self.line_distance*self.scale//2):
+            self.DatapointSavepic = cv2.line(self.DatapointSavepic,(0, y), (self.canvas_draw_width//2, y), color, thickness)
+
+        
+        img = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
+
+        self.Fullpreview = img
+        self.preview = self.DatapointSavepic
+
+        #Press Picture Preview
+        self.canvaspreview.configure(background='#FFFFFF', height=self.Fullpreview.height()//2, width=self.Fullpreview.width()//2)
+        self.canvaspreview.create_image(55,55,anchor=NW, image=self.Fullpreview )
+        self.toplevel.mainloop()
+          
+        
+    
+
+    def exportpdf(self):
+        self.toplevel.destroy()
+        c = Reportlanscape.Reportlanscape(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+
+
+
+
+    # def installed_printer():
+    #     printers = win32print.EnumPrinters(2)
+    #     for p in printers:
+    #         return(p)
+
+    # printerdef = ''
+
+    # def locprinter(self):
+    #     pt = Toplevel()
+    # ##    pt.geometry("250x250")
+    #     pt.title("choose printer")
+    #     var1 = StringVar()
+    #     LABEL = Label(pt, text="Select Printer",bg='goldenrod2',fg='black').pack(fill=X)
+    #     PRCOMBO = ttk.Combobox(pt, width=35)
+    #     print_list = []
+    #     printers = list(win32print.EnumPrinters(2))
+    #     for i in printers:
+    #         print_list.append(i[2])
+    #     print(print_list)
+    #     # Put printers in combobox
+    #     PRCOMBO['values'] = print_list
+    #     defprinter= win32print.GetDefaultPrinter()
+    #     print('Default selected Printer:',defprinter)
+    #     PRCOMBO.set(defprinter)
+    #     PRCOMBO.pack(padx=5,pady=5)
+            
+    #     def select():
+    #         global printerdef
+    #         printerdef = PRCOMBO.get()
+    #         printcommand()
+    #         pt.destroy()
+    #     BUTTON = ttk.Button(pt, text="Print",width=30,command=select).pack(pady=10)
+
+    #     LAB = Canvas(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+    #     LAB.pack()
+
+   
+
+    #     def printcommand():
+    #         printPic = LAB.pack_configure()
+    #         print(printPic)
+    #         print(printerdef)
+        
+    #         win32print.SetDefaultPrinter(printerdef)
+    #         filename = tempfile.mktemp(".txt")
+    #         open(filename,"w").write(str(printPic))
+    #         # Bellow is call to print text from T2 textbox
+    #         win32api.ShellExecute(
+    #             0,
+    #             "printto",
+    #             filename,
+    #             '"%s"' % win32print.GetDefaultPrinter(),
+    #             ".",
+    #             0
+    #         )
+    #         showinfo(title='Success',message='Print Successful',detail='Printing is done . thank You!')
 
     
 

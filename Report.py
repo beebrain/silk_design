@@ -133,7 +133,7 @@ class Report():
                 for index,color in zip(remainListDatapoint,remainListColorpoint) :
                     R,G,B = self.convertColor(color)
                     x,y = index
-                    x,y = x//10,y//10
+                    x,y = int(x),int(y)
                     if x < endX and y < endY:
                         print(x-startX)
                         t.setStyle(TableStyle([('BACKGROUND', \

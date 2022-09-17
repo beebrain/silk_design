@@ -50,16 +50,17 @@ class ChildClass(tk.Toplevel):
     
     def create_window(self):
         print("xx")
+        self.parent.canvasMain.delete("all")
         # self.destroy()
         w = int(self.entry4.get())
         h = int(self.entry3.get())
         # w,h = 1200-100, 1200-10
 
-        self.parent.canvas_draw_width = w*self.scale
-        self.parent.canvas_draw_height = h*self.scale
+        self.parent.canvas_draw_width = w*10
+        self.parent.canvas_draw_height = h*10
         # self.parent.canvasMain.config(width=w, height=h)
         self.parent.newsheet()
-        self.parent.canvasMain.delete("all")
+        
         self.parent.drawgrid()
         self.dis()
 

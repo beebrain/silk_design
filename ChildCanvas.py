@@ -51,9 +51,9 @@ class ChildCanvas(tk.Frame):
 
     def saveAndDraw(self):
         self.parrent.changemode(mode=1)
-        print()
-        self.DatapointSave = np.ones((self.canvas_height,self.canvas_width,3),dtype=np.uint8)*255
-
+        
+        self.DatapointSave = np.ones((self.canvas_height*self.scale,self.canvas_width*self.scale,3),dtype=np.uint8)*255
+        self.DatapointSave.shape
         for indexPoint,colorconvert in enumerate(self.GDatapoint.colorpoint):
             color1 = self.convertColor(colorconvert[1:3])
             color2 = self.convertColor(colorconvert[3:5])
@@ -62,10 +62,10 @@ class ChildCanvas(tk.Frame):
 
             x,y = int(x),int(y)
             print(x,y)
-            self.DatapointSave[y:y+10,x:x+10,0] = color1
-            self.DatapointSave[y:y+10,x:x+10,1] = color2
-            self.DatapointSave[y:y+10,x:x+10,2] = color3
-
+            self.DatapointSave[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,0] = color1
+            self.DatapointSave[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,1] = color2
+            self.DatapointSave[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,2] = color3
+            
         # background_image_data = cv2.imread("origin.jpg")
         img = ImageTk.PhotoImage(Image.fromarray(self.DatapointSave))
         self.parrent.Fullthumnal = img
