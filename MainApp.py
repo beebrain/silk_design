@@ -137,10 +137,7 @@ class GuiTestApp:
         self.CancelMini.rowconfigure('2', minsize='0')
         self.frame4.configure(height='100', width='100')
         self.frame4.grid(column='0', row='5', sticky='n')
-        self.DeleteMini = ttk.Button(self.frame4)
-        self.DeleteMini.configure(text='ลบ', width='5')
-        self.DeleteMini.grid(column='1', ipadx='5', padx='5', row='2', sticky='nw')
-        self.DeleteMini.rowconfigure('2', minsize='0')
+        
         
         self.frame6 = ttk.Frame(self.frame3)
         self.labelframe1 = ttk.Labelframe(self.frame6)
@@ -165,9 +162,9 @@ class GuiTestApp:
         self.printReport = ttk.Button(self.labelframe1)
         self.printReport.configure(text='Preview', width='15',command=self.reportExample)
         self.printReport.pack(side='top')
-        self.printReport1 = ttk.Button(self.labelframe1)
-        self.printReport1.configure(text='Previewlanscape', width='15',command=self.reportExamplelanscape)
-        self.printReport1.pack(side='top')
+        #self.printReport1 = ttk.Button(self.labelframe1)
+        #self.printReport1.configure(text='Previewlanscape', width='15',command=self.reportExamplelanscape)
+        #self.printReport1.pack(side='top')
         # self.printReport1 = ttk.Button(self.labelframe1)
         # self.printReport1.configure(text='Print', width='15',command=self.locprinter)
         # self.printReport1.pack(side='top')
@@ -251,6 +248,7 @@ class GuiTestApp:
         self.reloadListImage()
         #self.reloadListImagePreview()
         
+        self.dataThum = None
     ################# This function for create sub Windows
     def cancleMode(self):
         self.canvasMain.delete("all")
@@ -271,11 +269,12 @@ class GuiTestApp:
             self.window_data = self.thumnal
             ratio = self.line_distance*self.scale
             self.bg_img = self.ImageBackground.copy()
-            ### find Current Index
+            
+            ### find Current Index ตำแหน่งวางรูป
             indexx = (x//ratio)*ratio
             indexy = (y//ratio)*ratio
-            print(indexx,indexy)
-            print(self.bg_img.shape[0])
+            
+           
             if indexx+self.thumnal.shape[1] <= self.bg_img.shape[1] and indexy+self.thumnal.shape[0] <= self.bg_img.shape[0]:
                 self.bg_img[indexy:indexy+self.thumnal.shape[0],indexx:indexx+self.thumnal.shape[1]] = self.window_data
 
@@ -283,21 +282,26 @@ class GuiTestApp:
     
             
                 # Put the overlay at the bottom-right corner
-                shapes[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
+               # shapes[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
                 mask = shapes.astype(bool)
                 #bg_img = background.copy()
             # Create the overlay
                 self.bg_img[mask] = cv2.addWeighted(self.bg_img, 1 - 0.1, shapes,
                                         0.5, 0)[mask]
-                cv2.imshow("1",self.bg_img)
-                cv2.waitKey(10)
-
+                #cv2.imshow("1",self.bg_img)
+                #cv2.waitKey(10)
 
                 self.img = ImageTk.PhotoImage(Image.fromarray(self.bg_img))
                 self.canvasMain.create_image(0, 0,image=self.img,anchor="nw")
                 # self.ImageBackground = ImageBackground
-                print("xx")
+               
             print("overlay")
+
+
+
+
+
+            
     ########### Main Function 
     def convertColor(self,colorCode):
         return (int(colorCode, 16))
@@ -310,67 +314,88 @@ class GuiTestApp:
             color3 = self.convertColor(colorconvert[5:])
             x,y = self.GdataPointObj.datapoint[indexPoint]
             x,y = int(x),int(y)
+
+            # color blackground
             self.ImageBackground[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,0] = color1
             self.ImageBackground[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,1] = color2
             self.ImageBackground[y*self.scale:(y*self.scale)+self.scale,x*self.scale:(x*self.scale)+self.scale,2] = color3
           
         color = (0, 0, 0)
         thickness = 1
+       
 
-        #draw grid
+        #draw grid พื้นหลัง balckground main canvas
+
         # vertical lines at an interval of "line_distance" pixel
         for x in range(0,self.canvas_draw_height*self.scale,self.line_distance*self.scale):
              self.ImageBackground = cv2.line(self.ImageBackground,(x, 0), ( x, self.canvas_draw_height), color, thickness)
         # horizontal lines at an interval of "line_distance" pixel
         for y in range(0,self.canvas_draw_width*self.scale,self.line_distance*self.scale):
              self.ImageBackground = cv2.line(self.ImageBackground,(0, y), (self.canvas_draw_width, y), color, thickness)
-           
+
+         
 
     def regenImageThumnal(self):
         color = (0, 0, 0)
         thickness = 1
         #draw grid
         # vertical lines at an interval of "line_distance" pixel
-        for x in range(0,self.thumnal.shape[1],self.line_distance*self.scale):
-            if x%(5*self.scale) == 0:
-                self.thumnal = cv2.line(self.thumnal,(x, 0), ( x,self.thumnal.shape[0]), color, thickness)
-            else: 
+
+        ## resize thumnal with default size is 8
+        org_x  = self.thumnal.shape[0]
+        org_y  = self.thumnal.shape[1]
+        scale_env = 8
+        multiply_scale = self.scale / scale_env  
+        self.thumnal = cv2.resize(self.thumnal,(int(org_x*multiply_scale),int(org_y*multiply_scale)))  
+
+        for x in range(0,self.thumnal.shape[1],self.line_distance*self.scale):   
                 self.thumnal = cv2.line(self.thumnal,(x, 0), ( x,self.thumnal.shape[0]), color, thickness)
         # horizontal lines at an interval of "line_distance" pixel
         for y in range(0,self.thumnal.shape[0],self.line_distance*self.scale):
-            if x%(5*self.scale) == 0:
                 self.thumnal = cv2.line(self.thumnal,(0, y), (self.thumnal.shape[1], y), color, thickness)
-            else:
-                 self.thumnal = cv2.line(self.thumnal,(0, y), (self.thumnal.shape[1], y), color, thickness)
-
+            
                  
         self.thumnal = cv2.rectangle(self.thumnal,(0,0),(self.thumnal.shape[1],self.thumnal.shape[0]),\
-            (0,0,0),2)
+             (0,0,0),2)
 
 
+    def transparentOverlay(self,scr,overlay,pos=(0,0),scale = 1):
+        h,w,_ = overlay.shape
+        rows,cols,_ = scr.shape
+        y,x = pos[0],pos[1]
 
-
+        for i in range(h):
+            for j in range(w):
+                if x+i >=rows or y+j >= cols:
+                    continue
+                alpha = float(overlay[i][j][3]/255.0)
+                scr[x+i][y+j] = alpha*overlay[:3]+(1-alpha)*scr[x+i][y+j]
+        return scr
     
 
     def overLayImage(self):
+        self.reloadImageTemp(self.dataThum)
         self.regenImageWithData()
         self.regenImageThumnal()
         # Here is where the mouse coordinates should be injected to move the window over the background image
-        self.window_data = self.thumnal
+        self.window_data = self.thumnal 
         self.bg_img = self.ImageBackground.copy() 
         # Here is where the mouse coordinates should be injected to move the window over the background image
-        x,y = (0,0)
-        self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
+        x,y = (100,200)
 
-       
+        
+        self.window_data = self.transparentOverlay(self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]],self.window_data)
+        
+        
+        self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
         self.img = ImageTk.PhotoImage(Image.fromarray(self.bg_img))
         ### disable All button
         print("Overlay")
-    
         self.changemode(mode=3)
-
-
         self.canvasMain.update()
+
+
+
 
     def drawgrid(self):
         #self.canvasMain.config(width=self.canvas_draw_width, height=self.canvas_draw_width)
@@ -389,6 +414,9 @@ class GuiTestApp:
                 self.canvasMain.create_line(0, y, int(self.canvas_draw_width), y, fill="gray")
         self.canvasMain.update()
 
+
+
+
     def selectcolor(self):
         my_clolor = colorchooser.askcolor()
         #    dataPointObj.currentColor = my_clolor[1]
@@ -402,7 +430,12 @@ class GuiTestApp:
             self.Save['state'] = tk.DISABLED
             self.createTem['state'] = tk.DISABLED
             self.colorSelect['state'] = tk.DISABLED
+            self.SaveAs['state'] = tk.DISABLED
             self.New['state'] = tk.DISABLED
+            self.printReport['state'] = tk.DISABLED
+            #self.printReport1['state'] = tk.DISABLED
+            self.zoomin1['state'] = tk.DISABLED
+            self.zoomout2['state'] = tk.DISABLED
         elif self.mode == 2:
             self.button4['state'] = tk.DISABLED
             self.Save['state'] = tk.DISABLED
@@ -410,15 +443,27 @@ class GuiTestApp:
             self.colorSelect['state'] = tk.DISABLED
             self.New['state'] = tk.DISABLED
             self.LoadMini['state'] = tk.DISABLED
-            self.CancelMini['state'] = tk.DISABLED
+            self.CancelMini['state'] = tk.NORMAL
+            self.SaveAs['state'] = tk.DISABLED
+            self.printReport['state'] = tk.DISABLED
+            #self.printReport1['state'] = tk.DISABLED
+            self.zoomin1['state'] = tk.DISABLED
+            self.zoomout2['state'] = tk.DISABLED
         elif self.mode == 1:
+            
             self.button4['state'] = tk.NORMAL
             self.Save['state'] = tk.NORMAL
             self.createTem['state'] = tk.NORMAL
             self.colorSelect['state'] = tk.NORMAL
             self.New['state'] = tk.NORMAL
+            self.SaveAs['state'] = tk.NORMAL
             self.LoadMini['state'] = tk.NORMAL
             self.CancelMini['state'] = tk.NORMAL
+            self.printReport['state'] = tk.NORMAL
+            #self.printReport1['state'] = tk.NORMAL
+            self.zoomin1['state'] = tk.NORMAL
+            self.zoomout2['state'] = tk.NORMAL
+            
 
     def saveMenu_click(self):
         self.saveData(self.GdataPointObj)
@@ -598,7 +643,7 @@ class GuiTestApp:
         ## for draw mega pixel
         
         ratio = self.line_distance*self.scale
-        
+
         x = self.canvasMain.canvasx(event.x)
         y = self.canvasMain.canvasy(event.y)
 
@@ -696,13 +741,13 @@ class GuiTestApp:
             self.canvasMini_height = dheight
            # print(self.kid_canvas.scale)
             self.kid_canvas.canvasDrawGrid(tempData,tempColor)
-            self.kid_canvas.paintDataPoint()
-            
+            self.kid_canvas.paintDataPoint()      
 
         # ------------------------------ หน้าต่างแสดงตัวอย่างภาพย่อยที่บันทึกแล้ว -------------------------------------
     def redrawCanvasMini(self):
         # self.canvasMini.config(width=100, height=100)
         # self.canvasMini.config(height=self.canvasMini_height,width=self.canvasMini_width)
+        #self.scale = 8
         print(self.Fullthumnal.width())
         print(self.Fullthumnal.height())
         self.canvasMini.configure(background='#FFFFFF', height=self.Fullthumnal.height(), width=self.Fullthumnal.width())
@@ -722,9 +767,6 @@ class GuiTestApp:
             else: 
                 self.canvasMini.create_line(0, y, self.Fullthumnal.width()*self.scale, y, fill="gray")
 
-   
-
-
 
 
 
@@ -733,6 +775,7 @@ class GuiTestApp:
         with open("./ImageMini/{}.pk".format(fileData), 'rb') as input:
             self.thumnal = pickle.load(input)
             #print(self.thumnal)
+
             img = ImageTk.PhotoImage(Image.fromarray(self.thumnal))
             self.Fullthumnal = img
         
@@ -747,16 +790,21 @@ class GuiTestApp:
 
 
 
+
     def selectitem(self,event):
         selection = event.widget.curselection()
         if selection:
             index = selection[0]
-            data = event.widget.get(index)
-            print(data)
+            self.dataThum = event.widget.get(index)
+            print(self.dataThum )
             #### reload  Data Items
-            self.reloadImageTemp(data)
+            self.reloadImageTemp(self.dataThum )
         else:
             print("No Data")
+
+
+
+
 
     def reloadListImage(self):  
         if os.path.isdir("ImageMini"):
@@ -801,7 +849,13 @@ class GuiTestApp:
         self.button1.grid(column='0', row='2', sticky='nw')
         self.button1['command'] = self.exportpdf
         self.button1 = tk.Button(self.toplevel)
-    
+        self.button2 = tk.Button(self.toplevel)
+        self.button2.configure(text='แนวนอน')
+        self.button2.grid(column='2', row='2', sticky='nw')
+        self.button2['command'] = self.reportExamplelanscape
+        self.button2 = tk.Button(self.toplevel)
+
+
         #  #Label
         labelpreview = tk.LabelFrame(self.toplevel)
         labelpreview.configure(height=841 , takefocus=True, text='Preview',width=594)
@@ -856,6 +910,11 @@ class GuiTestApp:
         self.toplevel.mainloop()
           
     
+
+
+
+
+
     
     def reportExamplelanscape(self):
        # self.overLaypreview()
@@ -880,7 +939,11 @@ class GuiTestApp:
         self.button1.grid(column='0', row='2', sticky='nw')
         self.button1['command'] = self.exportpdf
         self.button1 = tk.Button(self.toplevel)
-    
+        self.button2 = tk.Button(self.toplevel)
+        self.button2.configure(text='แนวตั้ง')
+        self.button2.grid(column='2', row='2', sticky='nw')
+        self.button2['command'] = self.reportExample
+        self.button2 = tk.Button(self.toplevel)
         #  #Label
         labelpreview = tk.LabelFrame(self.toplevel)
         labelpreview.configure(height=594 , takefocus=True, text='Preview',width=841)
@@ -936,6 +999,10 @@ class GuiTestApp:
           
         
     
+
+
+
+
 
     def exportpdf(self):
         self.toplevel.destroy()
@@ -1018,6 +1085,7 @@ class GuiTestApp:
         
         print(self.scale)
         print(self.canvas_draw_width, self.canvas_draw_height)
+        
        
         
     def zoomout(self):   
@@ -1029,6 +1097,8 @@ class GuiTestApp:
         self.canvasMain.config(scrollregion=(0,0,50*self.scale,50*self.scale))
         self.drawgrid()
         self.paintwithDataPoint() 
+        
+
 
         print(self.scale) 
        
