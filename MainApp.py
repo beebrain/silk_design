@@ -1,4 +1,4 @@
-
+from ast import Delete
 from asyncio import events
 from cgitb import text
 import os
@@ -15,7 +15,7 @@ from cv2 import scaleAdd
 import Datapoint as Dp
 import ChildClass as CCD
 import ChildCanvas as CCV
-import Previewpic as PRV
+# import Previewpic as PRV
 import Datapoint as DP
 import Reportlanscape
 import Report
@@ -26,14 +26,14 @@ import cv2
 import glob
 from tkinter import colorchooser,filedialog
 import os,sys
-import win32print
-import win32api
+# import win32print
+# import win32api
 import tempfile
 from tkinter.messagebox import showinfo
 from win32api import GetSystemMetrics
 from tkPDFViewer import tkPDFViewer as pdf
 from scipy.ndimage import rotate
-
+import math
 #from screeninfo import get_monitors
 
 #for m in get_monitors():
@@ -836,6 +836,12 @@ class GuiTestApp:
         #c = Report.Report(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
     
         #Window Preview
+
+        # if os.path.exists("preview"):
+        #     os.removedirs("preview")
+        for i in os.listdir("./preview"):
+            os.remove("./preview/{}".format(i))
+
         self.toplevel = tk.Toplevel()
         self.toplevel.title("preview")    
         width= 800
@@ -877,44 +883,73 @@ class GuiTestApp:
         self.canvaspreview.create_text(240, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))
         
         setMaxwidth = 800
-        setMaxheight = 950
+        setMaxheight = 800
+
+        for row in range(math.ceil(self.canvas_draw_height / setMaxheight)):
+            for col in range(math.ceil(self.canvas_draw_width / setMaxwidth)):
+                if self.canvas_draw_width > 0  <= setMaxwidth:
+                    DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255        
+                    for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
+                        color1 = self.convertColor(colorconvert[1:3])
+                        color2 = self.convertColor(colorconvert[3:5])
+                        color3 = self.convertColor(colorconvert[5:])
+                        x,y =self.GdataPointObj.datapoint[indexPoint]
+                        x,y = int(x),int(y)
+                        print(x,y)
+
+                        if col*setMaxwidth//10 < x <= min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col))
+                            DatapointSavepic[y*10:(y*10)+10,x*10:(x*10)+10,0] = color1
+                            DatapointSavepic[y*10:(y*10)+10,x*10:(x*10)+10,1] = color2
+                            DatapointSavepic[y*10:(y*10)+10,x*10:(x*10)+10,2] = color3 
+
+                    color = (0, 0, 0)
+                    thickness = 1
+                    for x in range(0,min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col))+10,10):
+                        DatapointSavepic = cv2.line(DatapointSavepic,(x, 0), ( x, min(setMaxheight,self.canvas_draw_height-(setMaxheight*row))), color, thickness)
+                        # horizontal lines at an interval of "line_distance" pixel
+                    for y in range(0,min(setMaxheight,self.canvas_draw_height-(setMaxheight*row))+10,10):
+                        DatapointSavepic = cv2.line(DatapointSavepic,(0, y), (min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col)), y), color, thickness)
+                    
+                    if not os.path.exists("preview"):
+                        os.makedirs("preview")
+                    cv2.imwrite("./preview/image_{}{}.jpg".format(row,col),DatapointSavepic)
 
 
-        # Save Picture Preview
-        if self.canvas_draw_width > 0  <= setMaxwidth or self.canvas_draw_height > 0 <= setMaxheight :
-            self.DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255
-            self.DatapointSavepic.shape
-            for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
-                color1 = self.convertColor(colorconvert[1:3])
-                color2 = self.convertColor(colorconvert[3:5])
-                color3 = self.convertColor(colorconvert[5:])
-                x,y =self.GdataPointObj.datapoint[indexPoint]
-                x,y = int(x),int(y)
-                print(x,y)
-                self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
-                self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
-                self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
+        # # Save Picture Preview
+        # if self.canvas_draw_width > 0  <= setMaxwidth or self.canvas_draw_height > 0 <= setMaxheight :
+        #     self.DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255
+        #     self.DatapointSavepic.shape
+        #     for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
+        #         color1 = self.convertColor(colorconvert[1:3])
+        #         color2 = self.convertColor(colorconvert[3:5])
+        #         color3 = self.convertColor(colorconvert[5:])
+        #         x,y =self.GdataPointObj.datapoint[indexPoint]
+        #         x,y = int(x),int(y)
+        #         print(x,y)
+        #         self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
+        #         self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
+        #         self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
 
-            color = (0, 0, 0)
-            thickness = 1
-            if self.canvas_draw_width > 800:
-                canvas_draw_width = 800
+        #     color = (0, 0, 0)
+        #     thickness = 1
+        #     if self.canvas_draw_width > 800:
+        #         canvas_draw_width = 800
                 
-            for x in range(0,self.canvas_draw_width//2,self.line_distance*self.scale//2):
-                self.DatapointSavepic = cv2.line(self.DatapointSavepic,(x, 0), ( x, self.canvas_draw_height//2), color, thickness)
-        # horizontal lines at an interval of "line_distance" pixel
-            for y in range(0,self.canvas_draw_height//2,self.line_distance*self.scale//2):
-                self.DatapointSavepic = cv2.line(self.DatapointSavepic,(0, y), (self.canvas_draw_width//2, y), color, thickness)
+        #     for x in range(0,self.canvas_draw_width//2,self.line_distance*self.scale//2):
+        #         self.DatapointSavepic = cv2.line(self.DatapointSavepic,(x, 0), ( x, self.canvas_draw_height//2), color, thickness)
+        # # horizontal lines at an interval of "line_distance" pixel
+        #     for y in range(0,self.canvas_draw_height//2,self.line_distance*self.scale//2):
+        #         self.DatapointSavepic = cv2.line(self.DatapointSavepic,(0, y), (self.canvas_draw_width//2, y), color, thickness)
 
+        #     cv2.imwrite("img1.jpg",self.DatapointSavepic)
+        #     img = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
+        #     #img = np.ones((1000,500))
         
-            img = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
-            #img = np.ones((1000,500))
-        
-            self.Fullpreview = img
-            self.preview = self.DatapointSavepic
-             #Press Picture Preview
-            self.canvaspreview.configure(background='#FFFFFF', height=self.Fullpreview.height(), width=self.Fullpreview.width())
-            self.canvaspreview.create_image(30,45,anchor=NW, image=self.Fullpreview )
+        #     self.Fullpreview = img
+        #     self.preview = self.DatapointSavepic
+        #      #Press Picture Preview
+        #     self.canvaspreview.configure(background='#FFFFFF', height=self.Fullpreview.height(), width=self.Fullpreview.width())
+        #     self.canvaspreview.create_image(30,45,anchor=NW, image=self.Fullpreview )
 
 
         if  self.canvas_draw_width >=setMaxwidth  :
@@ -927,6 +962,9 @@ class GuiTestApp:
                     x,y =self.GdataPointObj.datapoint[indexPoint]
                     x,y = int(x),int(y)
                     print(x,y)
+
+                    
+
                     self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
                     self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
                     self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
@@ -943,6 +981,7 @@ class GuiTestApp:
 
             
                 img2 = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
+                cv2.imwrite("img2.jpg",self.DatapointSavepic)
                 #img = np.ones((1000,500))
             
                 self.Fullpreview2 = img2
