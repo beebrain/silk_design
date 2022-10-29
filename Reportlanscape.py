@@ -21,8 +21,8 @@ class Reportlanscape():
         # self.maincanvas.line(0, 0, 500, 500)
         # self.maincanvas.drawString(150,200,"dbfbbf")
         # self.maincanvas.save()
-        self.height = height//10
-        self.width = width//10
+        self.height = height//8
+        self.width = width//8
         self.GDatapoint = DataPoint
         self.filename = ""
         self.maxX = 100
@@ -39,7 +39,7 @@ class Reportlanscape():
     def drawBigTable(self):
         parts = []
         doc = SimpleDocTemplate("simple_table_grid.pdf",pagesize=landscape(letter),leftMargin=3.5*cm, rightMargin=0.75*cm,
-                                topMargin=3.5*cm,bottomMargin=2.5*cm)
+                                topMargin=3.5*cm,bottomMargin=1.5*cm)
         bigData = np.zeros((self.height,self.width))
         bigData =bigData.astype(str)
         bigData[:,:] = ""
@@ -76,7 +76,7 @@ class Reportlanscape():
                 for index,color in zip(remainListDatapoint,remainListColorpoint) :
                     R,G,B = self.convertColor(color)
                     x,y = index
-                    x,y = x//10,y//10
+                    x,y = x//8,y//8
                     if x < endX and y < endY:
                         print(x-startX)
                         t.setStyle(TableStyle([('BACKGROUND', \
@@ -134,6 +134,7 @@ class Reportlanscape():
                 for index,color in zip(remainListDatapoint,remainListColorpoint) :
                     R,G,B = self.convertColor(color)
                     x,y = index
+                    x,y = x//8,y//8
                     x,y = int(x),int(y)
                     if x < endX and y < endY:
                         print(x-startX)
@@ -154,7 +155,7 @@ class Reportlanscape():
     def drawTable(self):
         parts = []
         doc = SimpleDocTemplate("simple_table_grid.pdf", pagesize=A4, leftMargin=3.5*cm, rightMargin=2.2*cm,
-                                                        topMargin=3.5*cm,bottomMargin=2.5*cm)
+                                                        topMargin=3.5*cm,bottomMargin=1.5*cm)
         bigData = np.zeros((self.height,self.width))
         bigData =bigData.astype(str)
         bigData[:,:] = ""
@@ -217,4 +218,4 @@ class Reportlanscape():
                 self.filename = filesave.name
 
 if __name__ == "__main__":
-    ireport = Reportlanscape(DP.Datapoint(),800,1200)
+    ireport = Reportlanscape(DP.Datapoint(),1200,800)

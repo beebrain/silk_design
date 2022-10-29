@@ -21,8 +21,8 @@ class Report():
         # self.maincanvas.line(0, 0, 500, 500)
         # self.maincanvas.drawString(150,200,"dbfbbf")
         # self.maincanvas.save()
-        self.height = height//10
-        self.width = width//10
+        self.height = height//8
+        self.width = width//8
         self.GDatapoint = DataPoint
         self.filename = ""
         self.maxX = 100
@@ -39,7 +39,7 @@ class Report():
     def drawBigTable(self):
         parts = []
         doc = SimpleDocTemplate("simple_table_grid.pdf", pagesize=A4,leftMargin=0.75*cm, rightMargin=0.75*cm,
-            topMargin=1.5*cm,bottomMargin=2.5*cm)
+            topMargin=1.5*cm,bottomMargin=1.5*cm)
         bigData = np.zeros((self.height,self.width))
         bigData =bigData.astype(str)
         bigData[:,:] = ""
@@ -76,7 +76,7 @@ class Report():
                 for index,color in zip(remainListDatapoint,remainListColorpoint) :
                     R,G,B = self.convertColor(color)
                     x,y = index
-                    x,y = x//10,y//10
+                    x,y = x//8,y//8
                     if x < endX and y < endY:
                         print(x-startX)
                         t.setStyle(TableStyle([('BACKGROUND', \
@@ -153,7 +153,7 @@ class Report():
     def drawTable(self):
         parts = []
         doc = SimpleDocTemplate("simple_table_grid.pdf", pagesize=A4,leftMargin=2.2*cm, rightMargin=2.2*cm,
-            topMargin=1.5*cm,bottomMargin=2.5*cm)
+            topMargin=1.5*cm,bottomMargin=1.5*cm)
         bigData = np.zeros((self.height,self.width))
         bigData =bigData.astype(str)
         bigData[:,:] = ""
@@ -170,7 +170,7 @@ class Report():
         for index,color in zip(self.GDatapoint.datapoint,self.GDatapoint.colorpoint) :
             R,G,B = self.convertColor(color)
             x,y = index
-            x,y = x//10,y//10
+            x,y = x//8,y//8
             t.setStyle(TableStyle([('BACKGROUND', \
                 (x, y), (x, y), \
                     colors.Color(red=R/255.0,\
