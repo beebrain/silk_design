@@ -895,12 +895,17 @@ class GuiTestApp:
                         color3 = self.convertColor(colorconvert[5:])
                         x,y =self.GdataPointObj.datapoint[indexPoint]
                         x,y = int(x),int(y)
-                        print(x,y)
-
-                        if col*setMaxwidth//10 < x <= min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col))
-                            DatapointSavepic[y*10:(y*10)+10,x*10:(x*10)+10,0] = color1
-                            DatapointSavepic[y*10:(y*10)+10,x*10:(x*10)+10,1] = color2
-                            DatapointSavepic[y*10:(y*10)+10,x*10:(x*10)+10,2] = color3 
+                        
+                        xmin = col*setMaxwidth//10
+                        ymin = row*setMaxheight // 10
+                        print(col*setMaxwidth//10 , row*setMaxheight // 10)
+                        print(col*setMaxwidth//10 + setMaxwidth//10 -1, row*setMaxheight // 10 + setMaxheight//10 -1)
+                        # print(col*setMaxwidth//10,min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col))//10)
+                        if xmin <= x <xmin + setMaxwidth//10 and ymin <= y < ymin + setMaxheight//10 :
+                            print(x,y)
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,0] = color1
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,1] = color2
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,2] = color3 
 
                     color = (0, 0, 0)
                     thickness = 1
