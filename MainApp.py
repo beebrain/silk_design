@@ -95,7 +95,7 @@ class GuiTestApp:
 
         #self.canvasMain = Canvas(frame,bg='white',height=self.canvas_draw_height,width=self.canvas_draw_width,
         self.canvasMain = Canvas(frame,bg='white',height=self.canvas_height,width=self.canvas_width,
-                    scrollregion=(0,0,50*self.scale,50*self.scale))
+                    scrollregion=(0,0,self.canvas_draw_width*self.scale,self.canvas_draw_height*self.scale))
         
         
         hbar = Scrollbar(frame,orient = HORIZONTAL)
@@ -1182,7 +1182,7 @@ class GuiTestApp:
         self.canvas_draw_height = self.canvas_draw_height * 2
         # self.newsheet()
         self.canvasMain.delete("all")
-        self.canvasMain.config(scrollregion=(0,0,50*self.scale,50*self.scale))
+        self.canvasMain.config(scrollregion=(0,0,self.canvas_draw_width//2*self.scale,self.canvas_draw_height//2*self.scale))
         self.drawgrid()
         self.paintwithDataPoint()
         
@@ -1197,7 +1197,7 @@ class GuiTestApp:
         self.canvas_draw_height = self.canvas_draw_height//2
         # self.newsheet()
         self.canvasMain.delete("all")
-        self.canvasMain.config(scrollregion=(0,0,50*self.scale,50*self.scale))
+        self.canvasMain.config(scrollregion=(0,0,self.canvas_draw_width//2*self.scale,self.canvas_draw_height//2*self.scale))
         self.drawgrid()
         self.paintwithDataPoint() 
         
