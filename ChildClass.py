@@ -56,8 +56,8 @@ class ChildClass(tk.Toplevel):
         h = int(self.entry3.get())
         # w,h = 1200-100, 1200-10
 
-        self.parent.canvas_draw_width = w*10
-        self.parent.canvas_draw_height = h*10
+        self.parent.canvas_draw_width = w*8
+        self.parent.canvas_draw_height = h*8
         # self.parent.canvasMain.config(width=w, height=h)
         self.parent.newsheet()
         
