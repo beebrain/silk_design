@@ -884,11 +884,13 @@ class GuiTestApp:
         
         setMaxwidth = 800
         setMaxheight = 800
+        draw_height = self.canvas_draw_height//8 *10
+        draw_width = self.canvas_draw_width // 8 * 10
 
-        for row in range(math.ceil(self.canvas_draw_height / setMaxheight)):
-            for col in range(math.ceil(self.canvas_draw_width / setMaxwidth)):
-                if self.canvas_draw_width > 0  <= setMaxwidth:
-                    DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255        
+        for row in range(math.ceil(draw_height / setMaxheight)):
+            for col in range(math.ceil(draw_width / setMaxwidth)):
+                if draw_width > 0  <= setMaxwidth:
+                    DatapointSavepic = np.ones((draw_height,draw_width,3),dtype=np.uint8)*255        
                     for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
                         color1 = self.convertColor(colorconvert[1:3])
                         color2 = self.convertColor(colorconvert[3:5])
@@ -903,17 +905,17 @@ class GuiTestApp:
                         # print(col*setMaxwidth//10,min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col))//10)
                         if xmin <= x <xmin + setMaxwidth//10 and ymin <= y < ymin + setMaxheight//10 :
                             print(x,y)
-                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,0] = color1
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,0] = color3
                             DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,1] = color2
-                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,2] = color3 
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,2] = color1
 
                     color = (0, 0, 0)
                     thickness = 1
-                    for x in range(0,min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col))+10,10):
-                        DatapointSavepic = cv2.line(DatapointSavepic,(x, 0), ( x, min(setMaxheight,self.canvas_draw_height-(setMaxheight*row))), color, thickness)
+                    for x in range(0,min(setMaxwidth,draw_width-(setMaxwidth*col))+10,10):
+                        DatapointSavepic = cv2.line(DatapointSavepic,(x, 0), ( x, min(setMaxheight,draw_height-(setMaxheight*row))), color, thickness)
                         # horizontal lines at an interval of "line_distance" pixel
-                    for y in range(0,min(setMaxheight,self.canvas_draw_height-(setMaxheight*row))+10,10):
-                        DatapointSavepic = cv2.line(DatapointSavepic,(0, y), (min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col)), y), color, thickness)
+                    for y in range(0,min(setMaxheight,draw_height-(setMaxheight*row))+10,10):
+                        DatapointSavepic = cv2.line(DatapointSavepic,(0, y), (min(setMaxwidth,draw_width-(setMaxwidth*col)), y), color, thickness)
                     
                     if not os.path.exists("preview"):
                         os.makedirs("preview")
