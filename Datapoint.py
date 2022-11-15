@@ -10,7 +10,7 @@ class Datapoint(object):
         self.filename = ""
         self.height= None
         self.width = None
-
+        self.prepic = []
 
     def getfilename(self):
         return self.filename

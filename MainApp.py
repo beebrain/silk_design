@@ -26,6 +26,7 @@ import cv2
 import glob
 from tkinter import colorchooser,filedialog
 import os,sys
+from fpdf import FPDF
 # import win32print
 # import win32api
 import tempfile
@@ -35,10 +36,13 @@ from tkPDFViewer import tkPDFViewer as pdf
 from scipy.ndimage import rotate
 import math
 #from screeninfo import get_monitors
-
+from os import listdir
+from os.path import isfile, join
+import numpy
+import cv2
 #for m in get_monitors():
 #    print(str(m))
-
+import cv2 as cv
 
 
 PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -170,7 +174,7 @@ class GuiTestApp:
         # self.printReport1.configure(text='Print', width='15',command=self.locprinter)
         # self.printReport1.pack(side='top')
         
-        
+        self.pageimage = 1
         self.zoomin1 = ttk.Button(self.labelframe1)
         self.zoomin1.configure(text='zoom in', width='15',command=self.zoomin)
         self.zoomin1.pack(side='left')
@@ -227,7 +231,7 @@ class GuiTestApp:
         self.ImageBackground = None
         self.thumnal = None
         self.preview = None
-
+       
 
          # general parameter
         self.GdataPointObj = Dp.Datapoint()
@@ -240,7 +244,7 @@ class GuiTestApp:
         self.start_y = None
         self.rect = None
         self.x = self.y = 0
-
+        
         self.line_distance = 1
        
         ######## call init grid
@@ -602,12 +606,11 @@ class GuiTestApp:
             dataPoint = self.GdataPointObj.datapoint
             indexx_s1,indexy_s1 = indexx//self.scale,indexy//self.scale
             if [indexx_s1,indexy_s1] in dataPoint:
-                #print( indexx,indexy)         ### It filled
+                print( indexx,indexy)         ### It filled
+                print(self.currentindexX)
                 ### filled white color and remove indexx, indexy
-                if (str(event.type) == "Motion" and\
-                    (self.currentindexX != indexx or self.currentindexY != indexy)):
-                    
-                    indexofList = dataPoint.index([indexx,indexy])
+                if str(event.type) == "6" and (self.currentindexX != indexx or self.currentindexY != indexy):
+                    indexofList = dataPoint.index([indexx_s1,indexy_s1])
                     del self.GdataPointObj.datapoint[indexofList]
                     del self.GdataPointObj.colorpoint[indexofList]
 
@@ -615,7 +618,7 @@ class GuiTestApp:
                     myrectangle = self.canvasMain.create_rectangle(indexx,indexy, indexx+(ratio),indexy+(ratio), fill='black')
                     self.canvasMain.itemconfig(myrectangle, fill='white')
             else:
-                if str(event.type) == "Motion" and (self.currentindexX != indexx or self.currentindexY != indexy):
+                if str(event.type) == "6" and (self.currentindexX != indexx or self.currentindexY != indexy):
                     self.GdataPointObj.datapoint +=[[indexx_s1,indexy_s1]] ## new filled
                     self.GdataPointObj.colorpoint+=[self.GdataPointObj.currentColor]
                     myrectangle = self.canvasMain.create_rectangle(indexx,indexy, indexx+(ratio),indexy+(ratio), fill='black')
@@ -836,7 +839,7 @@ class GuiTestApp:
         #c = Report.Report(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
     
         #Window Preview
-
+        
         # if os.path.exists("preview"):
         #     os.removedirs("preview")
         for i in os.listdir("./preview"):
@@ -844,8 +847,8 @@ class GuiTestApp:
 
         self.toplevel = tk.Toplevel()
         self.toplevel.title("preview")    
-        width= 800
-        height= 841
+        width= 1000
+        height= 1000
         self.toplevel.geometry("%dx%d" % (width,height))
         self.toplevel.configure()
         self.toplevel.resizable(True, True)
@@ -859,34 +862,57 @@ class GuiTestApp:
         self.button2 = tk.Button(self.toplevel)
         self.button2.configure(text='แนวนอน')
         self.button2.grid(column='2', row='2', sticky='nw')
-        self.button2['command'] = self.reportExamplelanscape
+        self.button2['command'] = self.reportexaplelanscape
         self.button2 = tk.Button(self.toplevel)
+        self.button3 = tk.Button(self.toplevel)
+        self.button3.configure(text='ถัดไป')
+        self.button3.grid(column='5', row='2', sticky='nw')
+        self.button3['command'] = self.next
+        self.button4 = tk.Button(self.toplevel)
+        self.button4.configure(text='ก่อนหน้า')
+        self.button4.grid(column='4', row='2', sticky='nw')
+        self.button4['command'] = self.back
+        
+        
 
 
         #  #Label
-        labelpreview = tk.LabelFrame(self.toplevel)
-        labelpreview.configure(height=650 , takefocus=True, text='Preview1',width=470)
-        labelpreview.grid(column='5', row='3')
+        self.labelpreview = tk.LabelFrame(self.toplevel)
+        self.labelpreview.configure(height=750 , takefocus=True, text='แนวตั้ง'.format(self.pageimage),width=570)
+        self.labelpreview.grid(column='5', row='3')
         
         # self.button1 = tk.Button(self.toplevel)
         # self.button1.configure(text='บันทึกpdf')
         # self.button1.grid(column='0', row='2', sticky='nw')
         # self.button1['command'] = self.exportpdf
         # self.button1 = tk.Button(self.toplevel)
+         
+        #scrollbar
+       
+
+
 
         #canvas
-        self.canvaspreview = tk.Canvas(labelpreview)
+        self.canvaspreview = tk.Canvas(self.labelpreview)
         self.canvaspreview.place(relwidth=1, relheight=1)
         paperheigth = self.toplevel.winfo_fpixels('1m') * 297
-        paperwidth = self.toplevel.winfo_fpixels('1m') * 180
+        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
         self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
-        self.canvaspreview.create_text(240, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))
+        #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))
         
-        setMaxwidth = 800
-        setMaxheight = 800
+        
+        
+
+       
+      
+        
+        setMaxwidth = 950
+        setMaxheight = 1350
         draw_height = self.canvas_draw_height//8 *10
         draw_width = self.canvas_draw_width // 8 * 10
+        
 
+        self.pageImagee = 0
         for row in range(math.ceil(draw_height / setMaxheight)):
             for col in range(math.ceil(draw_width / setMaxwidth)):
                 if draw_width > 0  <= setMaxwidth:
@@ -919,122 +945,53 @@ class GuiTestApp:
                     
                     if not os.path.exists("preview"):
                         os.makedirs("preview")
-                    cv2.imwrite("./preview/image_{}{}.jpg".format(row,col),DatapointSavepic)
-
-
-        # # Save Picture Preview
-        # if self.canvas_draw_width > 0  <= setMaxwidth or self.canvas_draw_height > 0 <= setMaxheight :
-        #     self.DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255
-        #     self.DatapointSavepic.shape
-        #     for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
-        #         color1 = self.convertColor(colorconvert[1:3])
-        #         color2 = self.convertColor(colorconvert[3:5])
-        #         color3 = self.convertColor(colorconvert[5:])
-        #         x,y =self.GdataPointObj.datapoint[indexPoint]
-        #         x,y = int(x),int(y)
-        #         print(x,y)
-        #         self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
-        #         self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
-        #         self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
-
-        #     color = (0, 0, 0)
-        #     thickness = 1
-        #     if self.canvas_draw_width > 800:
-        #         canvas_draw_width = 800
-                
-        #     for x in range(0,self.canvas_draw_width//2,self.line_distance*self.scale//2):
-        #         self.DatapointSavepic = cv2.line(self.DatapointSavepic,(x, 0), ( x, self.canvas_draw_height//2), color, thickness)
-        # # horizontal lines at an interval of "line_distance" pixel
-        #     for y in range(0,self.canvas_draw_height//2,self.line_distance*self.scale//2):
-        #         self.DatapointSavepic = cv2.line(self.DatapointSavepic,(0, y), (self.canvas_draw_width//2, y), color, thickness)
-
-        #     cv2.imwrite("img1.jpg",self.DatapointSavepic)
-        #     img = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
-        #     #img = np.ones((1000,500))
-        
-        #     self.Fullpreview = img
-        #     self.preview = self.DatapointSavepic
-        #      #Press Picture Preview
-        #     self.canvaspreview.configure(background='#FFFFFF', height=self.Fullpreview.height(), width=self.Fullpreview.width())
-        #     self.canvaspreview.create_image(30,45,anchor=NW, image=self.Fullpreview )
-
-
-        if  self.canvas_draw_width >=setMaxwidth  :
-                self.DatapointSavepic = np.ones((self.canvas_draw_height ,self.canvas_draw_width,3),dtype=np.uint8)*255
-                self.DatapointSavepic.shape
-                for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
-                    color1 = self.convertColor(colorconvert[1:3])
-                    color2 = self.convertColor(colorconvert[3:5])
-                    color3 = self.convertColor(colorconvert[5:])
-                    x,y =self.GdataPointObj.datapoint[indexPoint]
-                    x,y = int(x),int(y)
-                    print(x,y)
-
+                    self.pageImagee += 1
+                    cv2.imwrite("./preview/image_{}.jpg".format( self.pageImagee),DatapointSavepic)
                     
 
-                    self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
-                    self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
-                    self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
+      
+    
+        filename = "image_{}.jpg".format(1)
+        filepath = f"./preview/{filename}"
 
-                color = (0, 0, 0)
-                thickness = 1
-               
-                print(self.canvas_draw_width-setMaxwidth)
-                for x in range(0,(self.canvas_draw_width-setMaxwidth) //2,self.line_distance*self.scale//2):
-                    self.DatapointSavepic = cv2.line(self.DatapointSavepic,(x, 0), ( x, self.canvas_draw_height  //2), color, thickness)
-            # horizontal lines at an interval of "line_distance" pixel
-                for y in range(0,self.canvas_draw_height //2,self.line_distance*self.scale//2):
-                    self.DatapointSavepic = cv2.line(self.DatapointSavepic,(0, y), ((self.canvas_draw_width-setMaxwidth)   //2, y), color, thickness)
+        # Load the original image, and get its size and color mode.
+        #img= (Image.open(filepath))     
+        image=Image.open(filepath)  
+        # Resize the image in the given (width, height)
+        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
 
+        # Conver the image in TkImage
+        my_img=ImageTk.PhotoImage(img)   
+        self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
+        self.canvaspreview.create_text(10, 10, text=self.pageimage, fill="gray", font=('Helvetica 10 '))
+
+        #อาจจะดูงงๆหน่อยครับ แต่ใช้งานได้ครับ 555
+        if self.pageImagee == 1 :
+            self.button3['state'] = tk.DISABLED
+            self.button4['state'] = tk.DISABLED
+        if self.pageimage == 1 :
             
-                img2 = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
-                cv2.imwrite("img2.jpg",self.DatapointSavepic)
-                #img = np.ones((1000,500))
-            
-                self.Fullpreview2 = img2
-                self.preview2 = self.DatapointSavepic
-       
+            self.button4['state'] = tk.DISABLED   
 
-                print("test",self.canvas_draw_width)
-                print("test",self.canvas_draw_height)
-                labelpreview1 = tk.LabelFrame(self.toplevel)
-                labelpreview1.configure(height=650 , takefocus=True, text='Preview2',width=470)
-                labelpreview1.grid(column='10', row='3')
-                self.canvaspreview2 = tk.Canvas(labelpreview1)
-                self.canvaspreview2.place(relwidth=1, relheight=1)
-                paperheigth1 = self.toplevel.winfo_fpixels('1m') * 297
-                paperwidth1 = self.toplevel.winfo_fpixels('1m') * 210
-                self.canvaspreview2.create_rectangle(0, 0, 0+paperwidth1, 0+paperheigth1, outline='', fill='white')
-                #self.canvaspreview2.create_text(300, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))
-                
-                self.canvaspreview2.create_image(30,45,anchor=NW, image=self.Fullpreview2)
-           
-
-       
+        if self.pageimage >= 2 < self.pageImagee:
+            self.button3['state'] = tk.NORMAL
+            self.button4['state'] = tk.NORMAL
+        
+        print("pageimagee",self.pageImagee)
+        print("pageimage",self.pageimage)
+        print("row",row)
         self.toplevel.mainloop()
-          
 
-
-
-    
-    def reportExamplelanscape(self):
-       # self.overLaypreview()
-
-        #b = Preview.Preview(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
-         
-        #self.canvaspreview = PRV.Previewpic(self)
-        #c = Report.Report(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
-    
-        #Window Preview
+    def reportexaplelanscape(self):
+        for i in os.listdir("./preview1"):
+            os.remove("./preview1/{}".format(i))
         self.toplevel = tk.Toplevel()
         self.toplevel.title("preview")    
-        width= 1000
-        height= 650
+        width= 1500
+        height= 1000
         self.toplevel.geometry("%dx%d" % (width,height))
         self.toplevel.configure()
         self.toplevel.resizable(True, True)
-
-        #Button
         self.button1 = tk.Button(self.toplevel)
         self.button1.configure(text='บันทึกpdf')
         self.button1.grid(column='0', row='2', sticky='nw')
@@ -1045,75 +1002,283 @@ class GuiTestApp:
         self.button2.grid(column='2', row='2', sticky='nw')
         self.button2['command'] = self.reportExample
         self.button2 = tk.Button(self.toplevel)
+        self.button3 = tk.Button(self.toplevel)
+        self.button3.configure(text='ถัดไป')
+        self.button3.grid(column='5', row='2', sticky='nw')
+        self.button3['command'] = self.next1
+        self.button4 = tk.Button(self.toplevel)
+        self.button4.configure(text='ก่อนหน้า')
+        self.button4.grid(column='4', row='2', sticky='nw')
+        self.button4['command'] = self.back1
+       
+
+
         #  #Label
-        labelpreview = tk.LabelFrame(self.toplevel)
-        labelpreview.configure(height=470 , takefocus=True, text='Preview',width=670)
-        labelpreview.grid(column='5', row='5')
+        self.labelpreview1 = tk.LabelFrame(self.toplevel)
+        self.labelpreview1.configure(height=570 , takefocus=True, text='แนวนอน'.format(self.pageimage),width=750)
+        self.labelpreview1.grid(column='5', row='3')
         
         # self.button1 = tk.Button(self.toplevel)
         # self.button1.configure(text='บันทึกpdf')
         # self.button1.grid(column='0', row='2', sticky='nw')
         # self.button1['command'] = self.exportpdf
         # self.button1 = tk.Button(self.toplevel)
+         
+        #scrollbar
+       
+
+
 
         #canvas
-        self.canvaspreview = tk.Canvas(labelpreview)
+        self.canvaspreview = tk.Canvas(self.labelpreview1)
         self.canvaspreview.place(relwidth=1, relheight=1)
         paperheigth = self.toplevel.winfo_fpixels('1m') * 210
         paperwidth = self.toplevel.winfo_fpixels('1m') * 297
-        self.canvaspreview.create_rectangle(20, 20, 20+paperwidth, 20+paperheigth, outline='', fill='white')
-        self.canvaspreview.create_text(300, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))        
-
-        # Save Picture Preview
+        self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
+        # self.canvaspreview.create_text(240, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))
         
-        self.DatapointSavepic = np.ones((self.canvas_draw_height,self.canvas_draw_width,3),dtype=np.uint8)*255
-        self.DatapointSavepic.shape
-        for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
-            color1 = self.convertColor(colorconvert[1:3])
-            color2 = self.convertColor(colorconvert[3:5])
-            color3 = self.convertColor(colorconvert[5:])
-            x,y =self.GdataPointObj.datapoint[indexPoint]
-            x,y = int(x),int(y)
-            print(x,y)
-            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,0] = color1
-            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,1] = color2
-            self.DatapointSavepic[y*4:(y*4)+4,x*4:(x*4)+4,2] = color3 
 
-        color = (0, 0, 0)
-        thickness = 1
-             
-        for x in range(0,self.canvas_draw_width//2,self.line_distance*self.scale//2):
-            self.DatapointSavepic = cv2.line(self.DatapointSavepic,(x, 0), ( x, self.canvas_draw_height//2), color, thickness)
-    # horizontal lines at an interval of "line_distance" pixel
-        for y in range(0,self.canvas_draw_height//2,self.line_distance*self.scale//2):
-            self.DatapointSavepic = cv2.line(self.DatapointSavepic,(0, y), (self.canvas_draw_width//2, y), color, thickness)
-
+                
+        setMaxwidth = 1350
+        setMaxheight = 950
+        draw_height = self.canvas_draw_height//8 *10
+        draw_width = self.canvas_draw_width // 8 * 10
         
-        img = ImageTk.PhotoImage(Image.fromarray(self.DatapointSavepic))
 
-        self.Fullpreview = img
-        self.preview = self.DatapointSavepic
+        self.pageImagee = 0
+        for row in range(math.ceil(draw_height / setMaxheight)):
+            for col in range(math.ceil(draw_width / setMaxwidth)):
+                if draw_width > 0  <= setMaxwidth:
+                    DatapointSavepic = np.ones((draw_height,draw_width,3),dtype=np.uint8)*255        
+                    for indexPoint,colorconvert in enumerate(self.GdataPointObj.colorpoint):
+                        color1 = self.convertColor(colorconvert[1:3])
+                        color2 = self.convertColor(colorconvert[3:5])
+                        color3 = self.convertColor(colorconvert[5:])
+                        x,y =self.GdataPointObj.datapoint[indexPoint]
+                        x,y = int(x),int(y)
+                        
+                        xmin = col*setMaxwidth//10
+                        ymin = row*setMaxheight // 10
+                        print(col*setMaxwidth//10 , row*setMaxheight // 10)
+                        print(col*setMaxwidth//10 + setMaxwidth//10 -1, row*setMaxheight // 10 + setMaxheight//10 -1)
+                        # print(col*setMaxwidth//10,min(setMaxwidth,self.canvas_draw_width-(setMaxwidth*col))//10)
+                        if xmin <= x <xmin + setMaxwidth//10 and ymin <= y < ymin + setMaxheight//10 :
+                            print(x,y)
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,0] = color3
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,1] = color2
+                            DatapointSavepic[(y-ymin)*10:((y-ymin)*10)+10,(x-xmin)*10:((x-xmin)*10)+10,2] = color1
 
-        #Press Picture Preview
-        self.canvaspreview.configure(background='#FFFFFF', height=self.Fullpreview.height()//2, width=self.Fullpreview.width()//2)
-        self.canvaspreview.create_image(30,30,anchor=NW, image=self.Fullpreview )
+                    color = (0, 0, 0)
+                    thickness = 1
+                    for x in range(0,min(setMaxwidth,draw_width-(setMaxwidth*col))+10,10):
+                        DatapointSavepic = cv2.line(DatapointSavepic,(x, 0), ( x, min(setMaxheight,draw_height-(setMaxheight*row))), color, thickness)
+                        # horizontal lines at an interval of "line_distance" pixel
+                    for y in range(0,min(setMaxheight,draw_height-(setMaxheight*row))+10,10):
+                        DatapointSavepic = cv2.line(DatapointSavepic,(0, y), (min(setMaxwidth,draw_width-(setMaxwidth*col)), y), color, thickness)
+                    
+                    if not os.path.exists("preview1"):
+                        os.makedirs("preview1")
+                    self.pageImagee += 1
+                    cv2.imwrite("./preview1/image_{}.jpg".format( self.pageImagee),DatapointSavepic)
+
+
+
+        filename = "image_{}.jpg".format(1)
+        filepath = f"./preview1/{filename}"
+
+        image=Image.open(filepath)  
+        # Resize the image in the given (width, height)
+        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+
+        # Conver the image in TkImage
+        my_img=ImageTk.PhotoImage(img)   
+        self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
+
+        #อาจจะดูงงๆหน่อยครับ แต่ใช้งานได้ครับ 555
+        if self.pageImagee == 1 :
+            self.button3['state'] = tk.DISABLED
+            self.button4['state'] = tk.DISABLED
+        if self.pageimage == 1 :
+            
+            self.button4['state'] = tk.DISABLED   
+
+        if self.pageimage >= 2 < self.pageImagee:
+            self.button3['state'] = tk.NORMAL
+            self.button4['state'] = tk.NORMAL
+        
+        print("pageimagee",self.pageImagee)
+        print("pageimage",self.pageimage)
+        print("row",row)      
         self.toplevel.mainloop()
-          
         
-    
+    def next(self):
+        
+        self.pageimage = self.pageimage +1
+        self.canvaspreview.delete("all")
+        if self.pageimage == self.pageImagee:
+            self.button3['state'] = tk.DISABLED
+            self.button4['state'] = tk.NORMAL
+        if self.pageimage >= 2 < self.pageImagee:
+            
+            self.button4['state'] = tk.NORMAL
+         #canvas
+        self.canvaspreview = tk.Canvas(self.labelpreview)
+        self.canvaspreview.place(relwidth=1, relheight=1)
+        paperheigth = self.toplevel.winfo_fpixels('1m') * 297
+        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
+        self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
+        #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))
+       
+                
+        filename = "image_{}.jpg".format(self.pageimage)
+        filepath = f"./preview/{filename}"        
+        
+        # Load the original image, and get its size and color mode.
+        image=Image.open(filepath)  
+        # Resize the image in the given (width, height)
+        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
 
+        # Conver the image in TkImage
+        my_img=ImageTk.PhotoImage(img)   
+        self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
+        self.canvaspreview.create_text(15, 15, text=self.pageimage, fill="gray", font=('Helvetica 10 '))
+        print("pageimage",self.pageimage)
+        self.toplevel.mainloop()
 
+    def back(self):
+        self.canvaspreview.delete("all")
+        self.pageimage = self.pageimage -1
+        self.canvaspreview.delete("all")
+        if self.pageimage <=1:
+            self.button4['state'] = tk.DISABLED
+            self.button3['state'] = tk.NORMAL
+        if self.pageimage >= 2 < self.pageImagee:
+            self.button3['state'] = tk.NORMAL
+            self.button4['state'] = tk.NORMAL
+         #canvas
+        self.canvaspreview = tk.Canvas(self.labelpreview)
+        self.canvaspreview.place(relwidth=1, relheight=1)
+        paperheigth = self.toplevel.winfo_fpixels('1m') * 297
+        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
+        self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
+        #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))
+                
+        filename = "image_{}.jpg".format(self.pageimage)
+        filepath = f"./preview/{filename}"        
+        
+        # Load the original image, and get its size and color mode.
+        image=Image.open(filepath)  
+        # Resize the image in the given (width, height)
+        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
 
+        # Conver the image in TkImage
+        my_img=ImageTk.PhotoImage(img)   
+        self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
+        self.canvaspreview.create_text(10, 10, text=self.pageimage, fill="gray", font=('Helvetica 10 '))
+        print("pageimage",self.pageimage)
+        self.toplevel.mainloop()
 
+    def next1(self):
+        
+        self.pageimage = self.pageimage +1
+        self.canvaspreview.delete("all")
+        if self.pageimage == self.pageImagee:
+            self.button3['state'] = tk.DISABLED
+            self.button4['state'] = tk.NORMAL
+        if self.pageimage >= 2 < self.pageImagee:
+            
+            self.button4['state'] = tk.NORMAL
+           #canvas
+        self.canvaspreview = tk.Canvas(self.labelpreview1)
+        self.canvaspreview.place(relwidth=1, relheight=1)
+        paperheigth = self.toplevel.winfo_fpixels('1m') * 297
+        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
+        self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
+        #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))
+                
+        filename = "image_{}.jpg".format(self.pageimage)
+        filepath = f"./preview1/{filename}"        
+        
+        # Load the original image, and get its size and color mode.
+        image=Image.open(filepath)  
+        # Resize the image in the given (width, height)
+        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+
+        # Conver the image in TkImage
+        my_img=ImageTk.PhotoImage(img)   
+        self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
+        self.canvaspreview.create_text(10, 10, text=self.pageimage, fill="gray", font=('Helvetica 10 ')) 
+        print(filename)
+        self.toplevel.mainloop()
+
+    def back1(self):
+        self.canvaspreview.delete("all")
+        self.pageimage = self.pageimage -1
+        self.canvaspreview.delete("all")
+        if self.pageimage <=1:
+            self.button4['state'] = tk.DISABLED
+            self.button3['state'] = tk.NORMAL
+        if self.pageimage >= 2 < self.pageImagee:
+            self.button3['state'] = tk.NORMAL
+            self.button4['state'] = tk.NORMAL
+           #canvas
+        self.canvaspreview = tk.Canvas(self.labelpreview1)
+        self.canvaspreview.place(relwidth=1, relheight=1)
+        paperheigth = self.toplevel.winfo_fpixels('1m') * 297
+        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
+        self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
+        #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))        
+        filename = "image_{}.jpg".format(self.pageimage)
+        filepath = f"./preview1/{filename}"        
+        
+        # Load the original image, and get its size and color mode.
+        image=Image.open(filepath)  
+        # Resize the image in the given (width, height)
+        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+
+        # Conver the image in TkImage
+        my_img=ImageTk.PhotoImage(img)   
+        self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
+        self.canvaspreview.create_text(10, 10, text=self.pageimage, fill="gray", font=('Helvetica 10 '))
+        print(filename)
+        self.toplevel.mainloop()  
 
     def exportpdf(self):
         self.toplevel.destroy()
-        c = Report.Report(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+        
+        path = "./preview/" # get the path of images
+
+        imagelist = listdir(path) # get list of all images
+
+        pdf = FPDF('P','mm','A4') # create an A4-size pdf document 
+
+        x,y,w,h = 10,15,self.canvas_draw_width//4,self.canvas_draw_height//4
+
+        for image in imagelist:
+
+            pdf.add_page()
+            pdf.image(path+image,x,y,w,h)
+      
+        #pdf.output("outputPortrait.pdf","F")
+        pdf.output(filedialog.asksaveasfilename(filetypes=[("PDF file", ".pdf")])+".pdf", "F")
 
     def exportpdflanscape(self):
         self.toplevel.destroy()
-        c = Reportlanscape.Reportlanscape(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
+        path = "./preview1/" # get the path of images
 
+        imagelist = listdir(path) # get list of all images
+
+        pdf = FPDF('L','mm','A4') # create an A4-size pdf document 
+
+        x,y,w,h = 10,15,self.canvas_draw_width//4,self.canvas_draw_height//4
+
+        for image in imagelist:
+
+            pdf.add_page()
+            pdf.image(path+image,x,y,w,h)
+
+        #pdf.output("outputLanscape.pdf","F")
+        pdf.output(filedialog.asksaveasfilename(filetypes=[("PDF file", ".pdf")]), "F")
 
 
     # def installed_printer():
