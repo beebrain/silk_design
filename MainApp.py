@@ -17,8 +17,7 @@ import ChildClass as CCD
 import ChildCanvas as CCV
 # import Previewpic as PRV
 import Datapoint as DP
-import Reportlanscape
-import Report
+
 from scipy import misc
 from PIL import ImageTk, Image, ImageDraw
 import numpy as np
@@ -987,7 +986,7 @@ class GuiTestApp:
             os.remove("./preview1/{}".format(i))
         self.toplevel = tk.Toplevel()
         self.toplevel.title("preview")    
-        width= 1500
+        width= 1000
         height= 1000
         self.toplevel.geometry("%dx%d" % (width,height))
         self.toplevel.configure()
