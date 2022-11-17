@@ -831,7 +831,7 @@ class GuiTestApp:
 
     def reportExample(self):
        # self.overLaypreview()
-
+        
         #b = Preview.Preview(self.GdataPointObj,self.canvas_draw_height,self.canvas_draw_width)
          
         #self.canvaspreview = PRV.Previewpic(self)
@@ -982,6 +982,7 @@ class GuiTestApp:
         self.toplevel.mainloop()
 
     def reportexaplelanscape(self):
+        self.toplevel.destroy()
         for i in os.listdir("./preview1"):
             os.remove("./preview1/{}".format(i))
         self.toplevel = tk.Toplevel()
