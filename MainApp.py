@@ -264,13 +264,15 @@ class GuiTestApp:
     def create_windowsBox(self):
         self.kid = CCD.ChildClass(self)
 
-        
+    
+       
+
     def move_window(self,event):
         event2canvas = lambda e, c: (c.canvasx(e.x), c.canvasy(e.y))
         if self.mode == 3:
             cx, cy = event2canvas(event, self.canvasMain)
             x,y = (int(cx),int(cy))
-            self.window_data = self.thumnal
+            self.window_data = self.thumnal.copy()
             ratio = self.line_distance*self.scale
             self.bg_img = self.ImageBackground.copy()
             
@@ -278,8 +280,47 @@ class GuiTestApp:
             indexx = (x//ratio)*ratio
             indexy = (y//ratio)*ratio
             
+            positionx,positiony = indexx//self.scale,indexy//self.scale
+            print(positionx,positiony)
+            
+            print(self.thumnal.shape[1]//self.scale,self.thumnal.shape[0]//self.scale)
            
+            gpoint_np = np.array(self.GdataPointObj.datapoint)
+            print(gpoint_np)
+            if gpoint_np.size != 0:
+
+                datainrange = gpoint_np[((\
+                    gpoint_np >= [positionx, positiony]) \
+                        & (gpoint_np <[positionx+self.thumnal.shape[1]//self.scale, positiony+self.thumnal.shape[0]//self.scale])).all(1)]
+                
+                print(datainrange)
+
+                offset_data = datainrange-[positionx,positiony]
+                for inx,overlaydata  in enumerate(datainrange):
+                    
+                    firstslice = int(overlaydata[1]*self.scale)
+                    endslice = int(overlaydata[0]*self.scale)
+                    sample = self.bg_img[firstslice:firstslice+self.scale,\
+                        endslice:endslice+self.scale,\
+                            :]
+                    
+
+                    offset = overlaydata-[positionx,positiony]
+                    firstoffset = int(offset[1]*self.scale)
+                    endoffset = int(offset[0]*self.scale)
+                    self.window_data[firstoffset:firstoffset+self.scale,\
+                        endoffset:endoffset+self.scale,:] = sample
+                    
+                    # cv2.imshow("{}".format(inx),sample)
+                    # cv2.waitKey(1)
+
+
+            # for idexbg in datainrange:
+            #     self.window_data[]  = self.bg_img[idexbg[0]*self.scale:idexbg[0]*self.scale+self.scale,\
+            #         idexbg[1:]*self.scale:idexbg[0]*self.scale+self.scale]
+
             if indexx+self.thumnal.shape[1] <= self.bg_img.shape[1] and indexy+self.thumnal.shape[0] <= self.bg_img.shape[0]:
+                # print(self.window_data)
                 self.bg_img[indexy:indexy+self.thumnal.shape[0],indexx:indexx+self.thumnal.shape[1]] = self.window_data
 
                 shapes = np.zeros_like(self.bg_img, np.uint8)
@@ -289,17 +330,17 @@ class GuiTestApp:
                # shapes[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
                 mask = shapes.astype(bool)
                 #bg_img = background.copy()
-            # Create the overlay
-                self.bg_img[mask] = cv2.addWeighted(self.bg_img, 1 - 0.1, shapes,
-                                        0.5, 0)[mask]
-                #cv2.imshow("1",self.bg_img)
-                #cv2.waitKey(10)
+                # Create the overlay
+                # self.bg_img[mask] = cv2.addWeighted(self.bg_img, 1 - 0.1, shapes,
+                                        # 0.5, 0)[mask]
+                cv2.imshow("s",self.bg_img)
+                cv2.waitKey(10)
 
                 self.img = ImageTk.PhotoImage(Image.fromarray(self.bg_img))
                 self.canvasMain.create_image(0, 0,image=self.img,anchor="nw")
                 # self.ImageBackground = ImageBackground
                
-            print("overlay")
+            print("overlay end")
 
 
 
@@ -382,19 +423,19 @@ class GuiTestApp:
         self.regenImageWithData()
         self.regenImageThumnal()
         # Here is where the mouse coordinates should be injected to move the window over the background image
-        self.window_data = self.thumnal 
+        # self.window_data = self.thumnal 
         self.bg_img = self.ImageBackground.copy() 
         # Here is where the mouse coordinates should be injected to move the window over the background image
-        x,y = (100,200)
+        # x,y = (100,200)
 
         
-        self.window_data = self.transparentOverlay(self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]],self.window_data)
+        # self.window_data = self.transparentOverlay(self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]],self.window_data)
         
         
-        self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
+        # self.bg_img[y:y+self.window_data.shape[0],x:x+self.window_data.shape[1]] = self.window_data
         self.img = ImageTk.PhotoImage(Image.fromarray(self.bg_img))
         ### disable All button
-        print("Overlay")
+        print("Overlay function")
         self.changemode(mode=3)
         self.canvasMain.update()
 
@@ -699,14 +740,37 @@ class GuiTestApp:
             indexx = (x//self.scale)
             indexy = (y//self.scale)
             print("Helloooo")
-            self.clearCanvas(start=(indexx,indexy),width=self.MiniGDataPoint.width,height=self.MiniGDataPoint.height)
+            # self.clearCanvas(start=(indexx,indexy),width=self.MiniGDataPoint.width,height=self.MiniGDataPoint.height)
             array_temp = np.array(self.MiniGDataPoint.datapoint)
             array_temp[:,:] =array_temp[:,:] + np.array([indexx,indexy])
             array_temp = array_temp.astype(np.int)
             miniDatapoint = array_temp.tolist()
-            self.GdataPointObj.datapoint += miniDatapoint
-            self.GdataPointObj.colorpoint += self.MiniGDataPoint.colorpoint
+
             
+
+            #tocheck dupicate
+            for indexpoint,minidata in enumerate(miniDatapoint):
+                datapoint = np.array(self.GdataPointObj.datapoint)
+                mininp = np.array(minidata)
+                miniDatapointcolor = self.MiniGDataPoint.colorpoint
+
+                if datapoint.size == 0:
+                    self.GdataPointObj.datapoint += [minidata]
+                    self.GdataPointObj.colorpoint += [miniDatapointcolor[indexpoint]]
+                    continue
+                
+                col0m = (datapoint[:,0]==mininp[0])
+                col1m = (datapoint[:,1]==mininp[1])
+                if (col0m & col1m).any():
+                    print("Found")
+                else:
+                    print("not Found")
+                    self.GdataPointObj.datapoint += [minidata]
+                    self.GdataPointObj.colorpoint += [miniDatapointcolor[indexpoint]]
+                
+
+
+                
             self.canvasMain.delete("all")
             self.drawgrid()
             self.paintwithDataPoint()
