@@ -387,8 +387,8 @@ class GuiTestApp:
         # vertical lines at an interval of "line_distance" pixel
 
         ## resize thumnal with default size is 8
-        org_x  = self.thumnal.shape[0]
-        org_y  = self.thumnal.shape[1]
+        org_x  = self.thumnal.shape[1]
+        org_y  = self.thumnal.shape[0]
         scale_env = 8
         multiply_scale = self.scale / scale_env  
         self.thumnal = cv2.resize(self.thumnal,(int(org_x*multiply_scale),int(org_y*multiply_scale)))  
@@ -822,17 +822,17 @@ class GuiTestApp:
         
 
         # vertical lines at an interval of "line_distance" pixel
-        for x in range(0,self.Fullthumnal.width()*self.scale,self.line_distance*self.scale):
-            if x%(5*self.scale) == 0:
-                self.canvasMini.create_line(x, 0, x, self.Fullthumnal.height()*self.scale, fill="black")
+        for x in range(0,self.Fullthumnal.width()*8,self.line_distance*8):
+            if x%(5*8) == 0:
+                self.canvasMini.create_line(x, 0, x, self.Fullthumnal.height()*8, fill="black")
             else: 
-                self.canvasMini.create_line(x, 0, x, self.Fullthumnal.height()*self.scale, fill="gray")
+                self.canvasMini.create_line(x, 0, x, self.Fullthumnal.height()*8, fill="gray")
 
-        for y in range(0,self.Fullthumnal.height()*self.scale,int(self.line_distance*self.scale)):
-            if y%(5*self.scale) == 0:
-               self.canvasMini.create_line(0, y, self.Fullthumnal.width()*self.scale, y, fill="black")
+        for y in range(0,self.Fullthumnal.height()*8,int(self.line_distance*8)):
+            if y%(5*8) == 0:
+               self.canvasMini.create_line(0, y, self.Fullthumnal.width()*8, y, fill="black")
             else: 
-                self.canvasMini.create_line(0, y, self.Fullthumnal.width()*self.scale, y, fill="gray")
+                self.canvasMini.create_line(0, y, self.Fullthumnal.width()*8, y, fill="gray")
 
 
 
@@ -1043,34 +1043,35 @@ class GuiTestApp:
         print("pageimagee",self.pageImagee)
         print("pageimage",self.pageimage)
         print("row",row)
+        self.toplevel2.destroy()
         self.toplevel.mainloop()
 
     def reportexaplelanscape(self):
-        self.toplevel.destroy()
+        
         for i in os.listdir("./preview1"):
             os.remove("./preview1/{}".format(i))
-        self.toplevel = tk.Toplevel()
-        self.toplevel.title("preview")    
+        self.toplevel2 = tk.Toplevel()
+        self.toplevel2.title("preview")    
         width= 1000
         height= 1000
-        self.toplevel.geometry("%dx%d" % (width,height))
+        self.toplevel2.geometry("%dx%d" % (width,height))
         self.toplevel.configure()
-        self.toplevel.resizable(True, True)
-        self.button1 = tk.Button(self.toplevel)
+        self.toplevel2.resizable(True, True)
+        self.button1 = tk.Button(self.toplevel2)
         self.button1.configure(text='บันทึกpdf')
         self.button1.grid(column='0', row='2', sticky='nw')
         self.button1['command'] = self.exportpdflanscape
-        self.button1 = tk.Button(self.toplevel)
-        self.button2 = tk.Button(self.toplevel)
+        self.button1 = tk.Button(self.toplevel2)
+        self.button2 = tk.Button(self.toplevel2)
         self.button2.configure(text='แนวตั้ง')
         self.button2.grid(column='2', row='2', sticky='nw')
         self.button2['command'] = self.reportExample
-        self.button2 = tk.Button(self.toplevel)
-        self.buttonnext = tk.Button(self.toplevel)
+        self.button2 = tk.Button(self.toplevel2)
+        self.buttonnext = tk.Button(self.toplevel2)
         self.buttonnext.configure(text='ถัดไป')
         self.buttonnext.grid(column='5', row='2', sticky='nw')
         self.buttonnext['command'] = self.next1
-        self.buttonback = tk.Button(self.toplevel)
+        self.buttonback = tk.Button(self.toplevel2)
         self.buttonback.configure(text='ก่อนหน้า')
         self.buttonback.grid(column='4', row='2', sticky='nw')
         self.buttonback['command'] = self.back1
@@ -1078,7 +1079,7 @@ class GuiTestApp:
 
 
         #  #Label
-        self.labelpreview1 = tk.LabelFrame(self.toplevel)
+        self.labelpreview1 = tk.LabelFrame(self.toplevel2)
         self.labelpreview1.configure(height=570 , takefocus=True, text='แนวนอน'.format(self.pageimage),width=750)
         self.labelpreview1.grid(column='5', row='3')
         
@@ -1096,8 +1097,8 @@ class GuiTestApp:
         #canvas
         self.canvaspreview = tk.Canvas(self.labelpreview1)
         self.canvaspreview.place(relwidth=1, relheight=1)
-        paperheigth = self.toplevel.winfo_fpixels('1m') * 210
-        paperwidth = self.toplevel.winfo_fpixels('1m') * 297
+        paperheigth = self.toplevel2.winfo_fpixels('1m') * 210
+        paperwidth = self.toplevel2.winfo_fpixels('1m') * 297
         self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
         # self.canvaspreview.create_text(240, 20, text="Silk Design Program", fill="gray", font=('Helvetica 10 '))
         
@@ -1172,8 +1173,9 @@ class GuiTestApp:
         
         print("pageimagee",self.pageImagee)
         print("pageimage",self.pageimage)
-        print("row",row)      
-        self.toplevel.mainloop()
+        print("row",row) 
+        self.toplevel.destroy()     
+        self.toplevel2.mainloop()
         
     def next(self):
         
@@ -1255,8 +1257,8 @@ class GuiTestApp:
            #canvas
         self.canvaspreview = tk.Canvas(self.labelpreview1)
         self.canvaspreview.place(relwidth=1, relheight=1)
-        paperheigth = self.toplevel.winfo_fpixels('1m') * 297
-        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
+        paperheigth = self.toplevel2.winfo_fpixels('1m') * 297
+        paperwidth = self.toplevel2.winfo_fpixels('1m') * 210
         self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
         #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))
                 
@@ -1273,7 +1275,7 @@ class GuiTestApp:
         self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
         self.canvaspreview.create_text(10, 10, text=self.pageimage, fill="gray", font=('Helvetica 10 ')) 
         print(filename)
-        self.toplevel.mainloop()
+        self.toplevel2.mainloop()
 
     def back1(self):
         self.canvaspreview.delete("all")
@@ -1288,8 +1290,8 @@ class GuiTestApp:
            #canvas
         self.canvaspreview = tk.Canvas(self.labelpreview1)
         self.canvaspreview.place(relwidth=1, relheight=1)
-        paperheigth = self.toplevel.winfo_fpixels('1m') * 297
-        paperwidth = self.toplevel.winfo_fpixels('1m') * 210
+        paperheigth = self.toplevel2.winfo_fpixels('1m') * 297
+        paperwidth = self.toplevel2.winfo_fpixels('1m') * 210
         self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
         #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))        
         filename = "image_{}.jpg".format(self.pageimage)
@@ -1305,7 +1307,7 @@ class GuiTestApp:
         self.canvaspreview.create_image(45,45,anchor=NW,image=my_img)
         self.canvaspreview.create_text(10, 10, text=self.pageimage, fill="gray", font=('Helvetica 10 '))
         print(filename)
-        self.toplevel.mainloop()  
+        self.toplevel2.mainloop()  
 
     def exportpdf(self):
         self.toplevel.destroy()
