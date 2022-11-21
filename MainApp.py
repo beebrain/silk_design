@@ -333,8 +333,8 @@ class GuiTestApp:
                 # Create the overlay
                 # self.bg_img[mask] = cv2.addWeighted(self.bg_img, 1 - 0.1, shapes,
                                         # 0.5, 0)[mask]
-                cv2.imshow("s",self.bg_img)
-                cv2.waitKey(10)
+                #cv2.imshow("s",self.bg_img)
+                #cv2.waitKey(10)
 
                 self.img = ImageTk.PhotoImage(Image.fromarray(self.bg_img))
                 self.canvasMain.create_image(0, 0,image=self.img,anchor="nw")
@@ -444,7 +444,7 @@ class GuiTestApp:
 
     def drawgrid(self):
         #self.canvasMain.config(width=self.canvas_draw_width, height=self.canvas_draw_width)
-        
+        self.canvasMain.delete("all")
         # vertical lines at an interval of "line_distance" pixel
         for x in range(0,int(self.canvas_draw_width),int(self.line_distance*self.scale)):
             if x%(5*self.scale) == 0:
@@ -927,14 +927,14 @@ class GuiTestApp:
         self.button2.grid(column='2', row='2', sticky='nw')
         self.button2['command'] = self.reportexaplelanscape
         self.button2 = tk.Button(self.toplevel)
-        self.button3 = tk.Button(self.toplevel)
-        self.button3.configure(text='ถัดไป')
-        self.button3.grid(column='5', row='2', sticky='nw')
-        self.button3['command'] = self.next
-        self.button4 = tk.Button(self.toplevel)
-        self.button4.configure(text='ก่อนหน้า')
-        self.button4.grid(column='4', row='2', sticky='nw')
-        self.button4['command'] = self.back
+        self.buttonnext = tk.Button(self.toplevel)
+        self.buttonnext.configure(text='ถัดไป')
+        self.buttonnext.grid(column='5', row='2', sticky='nw')
+        self.buttonnext['command'] = self.next
+        self.buttonback = tk.Button(self.toplevel)
+        self.buttonback.configure(text='ก่อนหน้า')
+        self.buttonback.grid(column='4', row='2', sticky='nw')
+        self.buttonback['command'] = self.back
         
         
 
@@ -1030,15 +1030,15 @@ class GuiTestApp:
 
         #อาจจะดูงงๆหน่อยครับ แต่ใช้งานได้ครับ 555
         if self.pageImagee == 1 :
-            self.button3['state'] = tk.DISABLED
-            self.button4['state'] = tk.DISABLED
+            self.buttonnext['state'] = tk.DISABLED
+            self.buttonback['state'] = tk.DISABLED
         if self.pageimage == 1 :
             
-            self.button4['state'] = tk.DISABLED   
+            self.buttonback['state'] = tk.DISABLED   
 
         if self.pageimage >= 2 < self.pageImagee:
-            self.button3['state'] = tk.NORMAL
-            self.button4['state'] = tk.NORMAL
+            self.buttonnext['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.NORMAL
         
         print("pageimagee",self.pageImagee)
         print("pageimage",self.pageimage)
@@ -1066,14 +1066,14 @@ class GuiTestApp:
         self.button2.grid(column='2', row='2', sticky='nw')
         self.button2['command'] = self.reportExample
         self.button2 = tk.Button(self.toplevel)
-        self.button3 = tk.Button(self.toplevel)
-        self.button3.configure(text='ถัดไป')
-        self.button3.grid(column='5', row='2', sticky='nw')
-        self.button3['command'] = self.next1
-        self.button4 = tk.Button(self.toplevel)
-        self.button4.configure(text='ก่อนหน้า')
-        self.button4.grid(column='4', row='2', sticky='nw')
-        self.button4['command'] = self.back1
+        self.buttonnext = tk.Button(self.toplevel)
+        self.buttonnext.configure(text='ถัดไป')
+        self.buttonnext.grid(column='5', row='2', sticky='nw')
+        self.buttonnext['command'] = self.next1
+        self.buttonback = tk.Button(self.toplevel)
+        self.buttonback.configure(text='ก่อนหน้า')
+        self.buttonback.grid(column='4', row='2', sticky='nw')
+        self.buttonback['command'] = self.back1
        
 
 
@@ -1160,15 +1160,15 @@ class GuiTestApp:
 
         #อาจจะดูงงๆหน่อยครับ แต่ใช้งานได้ครับ 555
         if self.pageImagee == 1 :
-            self.button3['state'] = tk.DISABLED
-            self.button4['state'] = tk.DISABLED
+            self.buttonnext['state'] = tk.DISABLED
+            self.buttonback['state'] = tk.DISABLED
         if self.pageimage == 1 :
             
-            self.button4['state'] = tk.DISABLED   
+            self.buttonback['state'] = tk.DISABLED   
 
         if self.pageimage >= 2 < self.pageImagee:
-            self.button3['state'] = tk.NORMAL
-            self.button4['state'] = tk.NORMAL
+            self.buttonnext['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.NORMAL
         
         print("pageimagee",self.pageImagee)
         print("pageimage",self.pageimage)
@@ -1180,11 +1180,11 @@ class GuiTestApp:
         self.pageimage = self.pageimage +1
         self.canvaspreview.delete("all")
         if self.pageimage == self.pageImagee:
-            self.button3['state'] = tk.DISABLED
-            self.button4['state'] = tk.NORMAL
+            self.buttonnext['state'] = tk.DISABLED
+            self.buttonback['state'] = tk.NORMAL
         if self.pageimage >= 2 < self.pageImagee:
             
-            self.button4['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.NORMAL
          #canvas
         self.canvaspreview = tk.Canvas(self.labelpreview)
         self.canvaspreview.place(relwidth=1, relheight=1)
@@ -1214,11 +1214,11 @@ class GuiTestApp:
         self.pageimage = self.pageimage -1
         self.canvaspreview.delete("all")
         if self.pageimage <=1:
-            self.button4['state'] = tk.DISABLED
-            self.button3['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.DISABLED
+            self.buttonnext['state'] = tk.NORMAL
         if self.pageimage >= 2 < self.pageImagee:
-            self.button3['state'] = tk.NORMAL
-            self.button4['state'] = tk.NORMAL
+            self.buttonnext['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.NORMAL
          #canvas
         self.canvaspreview = tk.Canvas(self.labelpreview)
         self.canvaspreview.place(relwidth=1, relheight=1)
@@ -1247,11 +1247,11 @@ class GuiTestApp:
         self.pageimage = self.pageimage +1
         self.canvaspreview.delete("all")
         if self.pageimage == self.pageImagee:
-            self.button3['state'] = tk.DISABLED
-            self.button4['state'] = tk.NORMAL
+            self.buttonnext['state'] = tk.DISABLED
+            self.buttonback['state'] = tk.NORMAL
         if self.pageimage >= 2 < self.pageImagee:
             
-            self.button4['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.NORMAL
            #canvas
         self.canvaspreview = tk.Canvas(self.labelpreview1)
         self.canvaspreview.place(relwidth=1, relheight=1)
@@ -1280,11 +1280,11 @@ class GuiTestApp:
         self.pageimage = self.pageimage -1
         self.canvaspreview.delete("all")
         if self.pageimage <=1:
-            self.button4['state'] = tk.DISABLED
-            self.button3['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.DISABLED
+            self.buttonnext['state'] = tk.NORMAL
         if self.pageimage >= 2 < self.pageImagee:
-            self.button3['state'] = tk.NORMAL
-            self.button4['state'] = tk.NORMAL
+            self.buttonnext['state'] = tk.NORMAL
+            self.buttonback['state'] = tk.NORMAL
            #canvas
         self.canvaspreview = tk.Canvas(self.labelpreview1)
         self.canvaspreview.place(relwidth=1, relheight=1)
