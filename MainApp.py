@@ -164,7 +164,7 @@ class GuiTestApp:
         self.colorSelect.configure(text='เลือกสี', width='15')
         self.colorSelect.pack(side='top')
         self.printReport = ttk.Button(self.labelframe1)
-        self.printReport.configure(text='Preview', width='15',command=self.reportExample)
+        self.printReport.configure(text='แสดงภาพตัวอย่าง', width='15',command=self.reportExample)
         self.printReport.pack(side='top')
         #self.printReport1 = ttk.Button(self.labelframe1)
         #self.printReport1.configure(text='Previewlanscape', width='15',command=self.reportExamplelanscape)
