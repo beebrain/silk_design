@@ -70,6 +70,7 @@ class GuiTestApp:
         #CanvasDraw
         self.canvas_draw_width = 50*self.scale
         self.canvas_draw_height = 50*self.scale
+       
 
         self.canvasMini_height =10
         self.canvasMini_width =10
@@ -98,7 +99,7 @@ class GuiTestApp:
 
         #self.canvasMain = Canvas(frame,bg='white',height=self.canvas_draw_height,width=self.canvas_draw_width,
         self.canvasMain = Canvas(frame,bg='white',height=self.canvas_height,width=self.canvas_width,
-                    scrollregion=(0,0,self.canvas_draw_width*self.scale,self.canvas_draw_height*self.scale))
+                    scrollregion=(0,0,self.canvas_draw_width+self.canvas_draw_height,self.canvas_draw_height+self.canvas_draw_width))
         
         
         hbar = Scrollbar(frame,orient = HORIZONTAL)
@@ -445,6 +446,7 @@ class GuiTestApp:
     def drawgrid(self):
         #self.canvasMain.config(width=self.canvas_draw_width, height=self.canvas_draw_width)
         self.canvasMain.delete("all")
+        self.canvasMain.config(scrollregion=(0,0,self.canvas_draw_width,self.canvas_draw_height))
         # vertical lines at an interval of "line_distance" pixel
         for x in range(0,int(self.canvas_draw_width),int(self.line_distance*self.scale)):
             if x%(5*self.scale) == 0:
@@ -589,24 +591,6 @@ class GuiTestApp:
             myrectangle = self.canvasMain.create_rectangle((indexx*self.scale), indexy*self.scale, indexx*self.scale+(ratio*self.scale),indexy*self.scale+(ratio*self.scale), fill='black')
             self.canvasMain.itemconfig(myrectangle, fill=colorpoint)
 
-    """
-    def paintwithDataPoint2(self,fixcolor=False):
-        ratio = 10
-        for indexpoint,datapointindex in enumerate(self.GdataPointObj.datapoint): 
-            (indexx)=datapointindex[0]
-            (indexy)=datapointindex[1]
-            colorpoint = self.GdataPointObj.colorpoint[indexpoint]
-            if fixcolor:
-                colorpoint = "#FFFFFF"
-           #print("scale",self.scale)
-        #    myrectangle = self.canvasMain.create_rectangle(1079.0,1081.0, 1100.0+(ratio*self.scale), 1100.0+(ratio*self.scale), fill='black')
-            if self.scale ==1 :
-                indexx//2
-                indexy//2
-                #print("Scale6666",self.scale)
-            myrectangle = self.canvasMain.create_rectangle(indexx//2, indexy//2, indexx//2+(ratio*self.scale),indexy//2+(ratio*self.scale), fill='black')
-            self.canvasMain.itemconfig(myrectangle, fill=colorpoint)
-    """
 
     def clearCanvas(self,start=(0,0),width=30,height=50):
         ratio = self.line_distance*self.scale
@@ -620,12 +604,11 @@ class GuiTestApp:
                 self.canvasMain.itemconfig(myrectangle, fill='white')
                 
                 
-
+#################################################################################
+#   DRAG MOUSE #
     def paintButton_Move(self,event):
-
         ## for draw mega pixel
-        ratio = self.line_distance*self.scale
-        
+        ratio = self.line_distance*self.scale 
         x = self.canvasMain.canvasx(event.x)
         y = self.canvasMain.canvasy(event.y)
         indexx = (x//ratio)*ratio
@@ -634,15 +617,11 @@ class GuiTestApp:
             indexx = (((self.canvas_draw_width-1))*ratio)*self.scale 
         if y >= self.canvas_draw_height-1:
             indexy = (((self.canvas_draw_height-1)//ratio)*ratio)*self.scale 
-            
-        
         if self.mode == 1:
             ## for draw mega pixel
             current_color = self.GdataPointObj.currentColor
             print(event.x,event.y)
             #print("curcer {},{} index {},{} current {},{}".format(x,y,indexx,indexy,self.currentindexX,self.currentindexY))
-
-
             dataPoint = self.GdataPointObj.datapoint
             indexx_s1,indexy_s1 = indexx//self.scale,indexy//self.scale
             if [indexx_s1,indexy_s1] in dataPoint:
@@ -665,16 +644,12 @@ class GuiTestApp:
                     self.canvasMain.itemconfig(myrectangle, fill=current_color)
             
             #print(self.GdataPointObj.datapoint)
-
-        elif self.mode ==2: # draw rectangle mode
-            
+        elif self.mode ==2: # draw rectangle mode      
             
             if x >= self.canvas_draw_width-1:
                 indexx = (((self.canvas_draw_width-1))*ratio)*self.scale 
             if y >= self.canvas_draw_height-1:
                 indexy = (((self.canvas_draw_height-1)//ratio)*ratio)*self.scale
-
-
             curX = self.canvasMain.canvasx(indexx)
             curY = self.canvasMain.canvasy(indexy)
             w, h = self.canvasMain.winfo_width(), self.canvasMain.winfo_height()
@@ -683,11 +658,11 @@ class GuiTestApp:
         self.currentindexX = indexx
         self.currentindexY = indexy
 
-    def paintButton_Press(self,event):
-        ## for draw mega pixel
-        
-        ratio = self.line_distance*self.scale
 
+#   Click Mouse 
+    def paintButton_Press(self,event):
+        ## for draw mega pixel   
+        ratio = self.line_distance*self.scale
         x = self.canvasMain.canvasx(event.x)
         y = self.canvasMain.canvasy(event.y)
 
@@ -766,19 +741,17 @@ class GuiTestApp:
                 else:
                     print("not Found")
                     self.GdataPointObj.datapoint += [minidata]
-                    self.GdataPointObj.colorpoint += [miniDatapointcolor[indexpoint]]
-                
-
-
-                
+                    self.GdataPointObj.colorpoint += [miniDatapointcolor[indexpoint]]   
             self.canvasMain.delete("all")
             self.drawgrid()
             self.paintwithDataPoint()
             self.changemode(mode=1)
-            
+         
         self.currentindexX = indexx
         self.currentindexY = indexy
-            
+
+
+#    Pass Mouse         
     def on_button_release(self,event):
         if self.mode == 2:
             self.changemode(mode=1)
@@ -809,6 +782,8 @@ class GuiTestApp:
            # print(self.kid_canvas.scale)
             self.kid_canvas.canvasDrawGrid(tempData,tempColor)
             self.kid_canvas.paintDataPoint()      
+
+
 
         # ------------------------------ หน้าต่างแสดงตัวอย่างภาพย่อยที่บันทึกแล้ว -------------------------------------
     def redrawCanvasMini(self):
@@ -852,12 +827,6 @@ class GuiTestApp:
         self.redrawCanvasMini()
         
 
-
-
-
-
-
-
     def selectitem(self,event):
         selection = event.widget.curselection()
         if selection:
@@ -868,8 +837,6 @@ class GuiTestApp:
             self.reloadImageTemp(self.dataThum )
         else:
             print("No Data")
-
-
 
 
 
@@ -963,16 +930,16 @@ class GuiTestApp:
         self.canvaspreview.create_rectangle(15, 10, 10+paperwidth, 20+paperheigth, outline='', fill='white')
         #self.canvaspreview.create_text(5, 5, text="self.pageimage", fill="gray", font=('Helvetica  '))
         
-        
-        
-
-       
-      
-        
+    
         setMaxwidth = 950
         setMaxheight = 1350
-        draw_height = self.canvas_draw_height//8 *10
-        draw_width = self.canvas_draw_width // 8 * 10
+
+       
+        draw_height = (self.canvas_draw_height//self.scale) *10
+        draw_width = (self.canvas_draw_width // self.scale) * 10
+       
+        
+
         
 
         self.pageImagee = 0
@@ -1021,7 +988,7 @@ class GuiTestApp:
         #img= (Image.open(filepath))     
         image=Image.open(filepath)  
         # Resize the image in the given (width, height)
-        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+        img=image.resize(((self.canvas_draw_width//self.scale)*5, (self.canvas_draw_height//self.scale)*5))
 
         # Conver the image in TkImage
         my_img=ImageTk.PhotoImage(img)   
@@ -1106,8 +1073,8 @@ class GuiTestApp:
                 
         setMaxwidth = 1350
         setMaxheight = 950
-        draw_height = self.canvas_draw_height//8 *10
-        draw_width = self.canvas_draw_width // 8 * 10
+        draw_height = (self.canvas_draw_height//self.scale) *10
+        draw_width = (self.canvas_draw_width // self.scale) * 10
         
 
         self.pageImagee = 0
@@ -1153,7 +1120,7 @@ class GuiTestApp:
 
         image=Image.open(filepath)  
         # Resize the image in the given (width, height)
-        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+        img=image.resize(((self.canvas_draw_width//self.scale)*5, (self.canvas_draw_height//self.scale)*5))
 
         # Conver the image in TkImage
         my_img=ImageTk.PhotoImage(img)   
@@ -1202,7 +1169,7 @@ class GuiTestApp:
         # Load the original image, and get its size and color mode.
         image=Image.open(filepath)  
         # Resize the image in the given (width, height)
-        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+        img=image.resize(((self.canvas_draw_width//self.scale)*5, (self.canvas_draw_height//self.scale)*5))
 
         # Conver the image in TkImage
         my_img=ImageTk.PhotoImage(img)   
@@ -1235,7 +1202,7 @@ class GuiTestApp:
         # Load the original image, and get its size and color mode.
         image=Image.open(filepath)  
         # Resize the image in the given (width, height)
-        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+        img=image.resize(((self.canvas_draw_width//self.scale)*5, (self.canvas_draw_height//self.scale)*5))
 
         # Conver the image in TkImage
         my_img=ImageTk.PhotoImage(img)   
@@ -1268,7 +1235,7 @@ class GuiTestApp:
         # Load the original image, and get its size and color mode.
         image=Image.open(filepath)  
         # Resize the image in the given (width, height)
-        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+        img=image.resize(((self.canvas_draw_width//self.scale)*5, (self.canvas_draw_height//self.scale)*5))
 
         # Conver the image in TkImage
         my_img=ImageTk.PhotoImage(img)   
@@ -1300,7 +1267,7 @@ class GuiTestApp:
         # Load the original image, and get its size and color mode.
         image=Image.open(filepath)  
         # Resize the image in the given (width, height)
-        img=image.resize((self.canvas_draw_width//2+100, self.canvas_draw_height//2+100))
+        img=image.resize(((self.canvas_draw_width//self.scale)*5, (self.canvas_draw_height//self.scale)*5))
 
         # Conver the image in TkImage
         my_img=ImageTk.PhotoImage(img)   
@@ -1344,7 +1311,7 @@ class GuiTestApp:
             pdf.image(path+image,x,y,w,h)
 
         #pdf.output("outputLanscape.pdf","F")
-        pdf.output(filedialog.asksaveasfilename(filetypes=[("PDF file", ".pdf")]), "F")
+        pdf.output(filedialog.asksaveasfilename(filetypes=[("PDF file", ".pdf")])+".pdf", "F")
 
 
     # def installed_printer():
@@ -1416,6 +1383,12 @@ class GuiTestApp:
         # self.newsheet()
         self.canvasMain.delete("all")
         self.canvasMain.config(scrollregion=(0,0,self.canvas_draw_width//2*self.scale,self.canvas_draw_height//2*self.scale))
+        # if self.scale > 8 :
+        #     self.printReport['state'] = tk.DISABLED
+        # if self.scale ==8 :
+        #    self.printReport['state'] = tk.NORMAL       
+            
+
         self.drawgrid()
         self.paintwithDataPoint()
         
@@ -1431,13 +1404,14 @@ class GuiTestApp:
         # self.newsheet()
         self.canvasMain.delete("all")
         self.canvasMain.config(scrollregion=(0,0,self.canvas_draw_width//2*self.scale,self.canvas_draw_height//2*self.scale))
-        self.drawgrid()
-        self.paintwithDataPoint() 
+        # if self.scale < 8 :
+        #     self.printReport['state'] = tk.DISABLED
+        # if self.scale ==8 :
+        #    self.printReport['state'] = tk.NORMAL 
         
-
-
+        self.drawgrid()
+        self.paintwithDataPoint()    
         print(self.scale) 
-       
         print(self.GdataPointObj.datapoint)
         
 
